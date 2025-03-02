@@ -11,7 +11,7 @@ import MapKit
 
 
 class GoogleMap: UIMap {
-    var camera = GMSCameraPosition.camera(withLatitude: 49, longitude: 27, zoom: 21)
+    var camera = GMSCameraPosition.camera(withLatitude: 49, longitude: 27, zoom: 3)
     var map = GMSMapView()
     lazy var trackers:[GMSMarker] = (0..<STServer.trackers.count).map{_ in
         var mark = GMSMarker()
@@ -47,9 +47,8 @@ class GoogleMap: UIMap {
     }
     
     init(_ superFrame: CGRect) {
-        let childFrame = CGRect(x: 0, y: 0, width: superFrame.width, height: superFrame.height-48)
         map.camera = self.camera
-        map.frame = childFrame
+        map.frame = superFrame
         self.setSetingsSelfLocation()
     }
     

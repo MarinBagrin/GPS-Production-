@@ -4,12 +4,12 @@
 //
 //  Created by Marin on 03.01.2025.
 //
-
 import UIKit
 import GoogleMaps
 import MapKit
+var FRAME_LIST: CGRect!
 
-class ListTrackers: UIView {
+class ListTrackers: UITableView {
     lazy var unitateY = frame.height / 10
     lazy var unitateX = frame.width / 10
     //
@@ -18,15 +18,10 @@ class ListTrackers: UIView {
     var backMain: UIButton!
     //
     
-    
-    override init(frame: CGRect) {
-        super.init(frame: CGRect(x: 0-frame.width, y: 0, width: frame.width, height: frame.height))
-        
-        setState()
+    override init(frame: CGRect, style: UITableView.Style = .plain) {
+        super.init(frame: frame, style: style)
         setList()
-        setBackMain()
     }
-    //
     func setState() {
         state = State(frame: frame)
         self.addSubview(state)
@@ -34,13 +29,13 @@ class ListTrackers: UIView {
     //
     func setList() {
         list = UITableView()
-        
-        list.frame = CGRect(x: 0, y:frame.height * 0.25, width: frame.width * 0.8, height:frame.height * 0.75 )
+        FRAME_LIST = list.frame
         list.backgroundColor = .white
         
         list.dataSource = self
         list.delegate = self
-        self.addSubview(list)
+        //self.addSubview(list)
+        print( 123213);
     }
     func setBackMain(){
         backMain = UIButton()
@@ -86,12 +81,11 @@ class State: UIView {
     }
     //
     func setBackMain() {
-        backMain.frame = CGRect(x: unitateX * 8, y: unitateY * 2, width: unitateX * 2, height: unitateY * 2)
-        print(backMain.frame.height)
-        var config = UIButton.Configuration.plain()
-        config.image = resizeImage(image: UIImage(named: "back")!, targetSize: CGSize(width: unitateX * 2, height: unitateY * 2))
+        backMain.frame = CGRect(x: frame.width * 0.8, y: frame.height * 0.2, width: frame.width * 0.2, height: frame.width * 0.2)
         
-        backMain.configuration = config
+        
+        
+        backMain.setImage(resizeImage(image: UIImage(named:"back.png")!, targetSize: frame.size), for: .normal)
         backMain.addTarget(self, action: #selector(backMainOfButton), for: .touchUpInside)
         self.addSubview(backMain)
     }
@@ -138,7 +132,7 @@ class State: UIView {
         filterID.frame = CGRect(x: frame.width * 0.33, y: frame.height - 30, width: frame.width * 0.33, height: 30)
         filterID.setTitle("By ID", for: .normal)
         filterID.setImage(resizeImage(image: UIImage(named: "unselectedCircle.png")!, targetSize: CGSize(width: 25, height: 25)), for: .normal)
-        filterID.setImage(resizeImage(image: UIImage(named: "selectedCircle.png")!, targetSize: CGSize(width: 25, height: 25)), for: .selected)
+        filterID.setImage(resizeImage(image: UIImage(named: "selectedCircle.png")!, targetSize: CGSize(width: frame.width, height:frame.width)), for: .selected)
         filterID.setTitleColor(UIColor.black, for: .normal)
         filterID.titleLabel?.font = UIFont.systemFont(ofSize: 20)
         filterID.addTarget(self, action: #selector(changeFilterByName), for: .touchUpInside)
@@ -188,18 +182,20 @@ extension  ListTrackers:  UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let track = STServer.trackers[indexPath.row]
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "tracker") ?? UITableViewCell(style: .subtitle, reuseIdentifier: "tracker")
-        cell.backgroundColor = .white
-        var config = cell.defaultContentConfiguration()
-        config.textProperties.color = .black
-        config.secondaryTextProperties.color = .black
-        config.text = String(track.name)
-        if mainView.listTrackers.state.showID.isSelected {
-            config.secondaryText = String(track.id)
-        }
-        cell.contentConfiguration = config
-        print(indexPath.row)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "tracker") ?? TrackerInfoCell(name: "0", id: "1", battery: 42, typeGpsConnection:.medium, typeNetConnection: .stable)
+//        cell.backgroundColor = .white
+//        var config = cell.defaultContentConfiguration()
+//        config.textProperties.color = .black
+//        config.secondaryTextProperties.color = .black
+//        config.text = String(track.name)
+//        if mainView.listTrackers.state.showID.isSelected {
+//            config.secondaryText = String(track.id)
+//        }
+//        cell.contentConfiguration = config
+//        print(indexPath.row)
+        print(1333121312)
         return cell
+        
     }
 }
 extension ListTrackers: UITableViewDelegate {

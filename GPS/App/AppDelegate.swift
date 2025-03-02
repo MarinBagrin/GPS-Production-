@@ -4,7 +4,8 @@
 //
 //  Created by Marin on 29.12.2024.
 //
-
+import Foundation
+import Network
 import UIKit
 import GoogleMaps
 @main
@@ -15,27 +16,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         GMSServices.provideAPIKey("AIzaSyAUn4wVQyjs7Dz5-alcoWHLcZHv7FrR15U")
-        DispatchQueue.global().async {
-            while true {
-                Thread.sleep(forTimeInterval: 3)
-
-            //from server to
-            // STServer
-            //load data
-            //load is finished
-                for tracker in STServer.trackers {
-                    tracker.lat += Double.random(in: -1...1)
-                    tracker.long += Double.random(in: -1...1)
-                }
-                //
-                DispatchQueue.main.async {
-                    for map in mainView.listMaps.activeView.maps {
-                        map.updateTrackers()
-                    }
-                }
-            }
-            
-        }
+        // Адрес и порт сервера
+        
         
 //        DispatchQueue.global().async {
 //            var currentMap = mainView.view.subviews[0]

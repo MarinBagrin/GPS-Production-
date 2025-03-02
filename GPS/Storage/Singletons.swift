@@ -9,6 +9,7 @@ class STServer {
 //    static var login: String!
 //    static var password: String!
     static var trackers:[Tracker] = [Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker()]
+    
 }
 
 

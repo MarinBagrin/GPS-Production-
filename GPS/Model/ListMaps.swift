@@ -22,10 +22,10 @@ class ListMaps: UIView, ProListMaps {
         activeView = ActiveView(superFrame: frame)
         self.addSubview(activeView)
         
-        backView = BackView(frame: CGRect(x: 0, y: 0, width: frame.width, height: frame.height * 0.8))
+        backView = BackView(frame: CGRect(x: 0, y: 0, width: frame.width, height: frame.height ))
         self.addSubview(backView)
         
-        mainView.view.addSubview(activeView.maps[0].getUIView())
+        mainView.view.addSubview(activeView.maps[1].getUIView())
         
     }
     required init?(coder: NSCoder) {

@@ -27,8 +27,8 @@ class ActionMenu: UIView {
         selectMap.backgroundColor = .systemGray6
         selectMap.layer.cornerRadius = 10
         selectMap.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        selectMap.setImage(resizeImage(image: UIImage(named: "unselectedSloi.png")!, targetSize: CGSize(width: frame.width * 0.80, height: frame.height * 0.80) ), for: .normal)
-        selectMap.setImage(resizeImage(image: UIImage(named: "selectedSloi.png")!, targetSize: CGSize(width: frame.width * 0.80, height: frame.height * 0.80) ), for: .selected)
+        selectMap.setImage(resizeImage(image: UIImage(named: "unselectedSloi.png")!, targetSize: CGSize(width: frame.height * 1, height: frame.height * 1) ), for: .normal)
+        selectMap.setImage(resizeImage(image: UIImage(named: "selectedSloi.png")!, targetSize: CGSize(width: frame.height * 1, height: frame.height * 1) ), for: .selected)
         selectMap.addTarget(self, action: #selector(selectMapFromList), for: .touchUpInside)
         self.addSubview(selectMap)
         //var config = UIButton.Configuration.plain()
@@ -39,8 +39,8 @@ class ActionMenu: UIView {
         showLoaction.layer.cornerRadius = 10
         showLoaction.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
 
-        showLoaction.setImage(resizeImage(image: UIImage(named: "unselectedLocation.png")!, targetSize: CGSize(width: frame.width * 0.80, height: frame.height * 0.80 )), for: .normal)
-        showLoaction.setImage(resizeImage(image: UIImage(named: "selectedLocation.png")!, targetSize: CGSize(width: frame.width * 0.80, height: frame.height * 0.80 )), for: .selected)
+        showLoaction.setImage(resizeImage(image: UIImage(named: "unselectedLocation.png")!, targetSize: CGSize(width: frame.height * 1, height: frame.height * 1 )), for: .normal)
+        showLoaction.setImage(resizeImage(image: UIImage(named: "selectedLocation.png")!, targetSize: CGSize(width: frame.height * 1, height: frame.height * 1 )), for: .selected)
         showLoaction.addTarget(self, action: #selector(startUpdating), for: .touchUpInside)
         self.addSubview(showLoaction)
 

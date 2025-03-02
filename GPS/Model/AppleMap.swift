@@ -16,8 +16,7 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
     var selfLoaction = MKPointAnnotation()
     
     init(_ superFrame: CGRect) {
-        let childFrame = CGRect(x: 0, y: 0, width: superFrame.width, height: superFrame.height-48)
-        map = MKMapView(frame:childFrame)
+        map = MKMapView(frame:superFrame)
         initialLocation = CLLocationCoordinate2D(latitude: 49, longitude: 27)
         region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 1907, longitudinalMeters: 1907)
         map.setRegion(region, animated: true)

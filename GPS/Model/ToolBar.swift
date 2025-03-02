@@ -10,7 +10,8 @@ class ToolBar: UIView{
 
     var listTrackersButton = UIButton()
     var choiceMapButton = UIButton()
-
+    var openConsole = UIButton()
+    
     
     
     init(superFrame: CGRect) {
@@ -22,6 +23,9 @@ class ToolBar: UIView{
         setMoreButton()        ///
         //MARK: choiceMapButton
         setChoiceMap()
+        //MARK: openConsole
+        setOpenConsole()
+
         
     }
     
@@ -33,23 +37,29 @@ class ToolBar: UIView{
         mainView.view.addSubview(mainView.listMaps)
 
     }
+    func setOpenConsole() {
+        openConsole.frame = CGRect(x: frame.width / 2, y: frame.height * 0.2, width: frame.width * 0.1, height: frame.width * 0.1)
+        openConsole.backgroundColor = .cyan
+        openConsole.addTarget(self, action: #selector(showConsole), for: .touchUpInside)
+        self.addSubview(openConsole)
+    }
     func setMoreButton() {
         listTrackersButton.frame = CGRect(x: frame.width * 0.075, y: frame.height * 0.2, width:frame.width * 0.1 , height: frame.width * 0.1)
 
-        var configButton = UIButton.Configuration.plain()
-        configButton.image = resizeImage(image: UIImage(named: "more.png")!, targetSize: CGSize(width: frame.width * 0.1, height: frame.width * 0.1))
-        listTrackersButton.configuration = configButton
-        
+//        var configButton = UIButton.Configuration.plain()
+//        configButton.image = resizeImage(image: UIImage(named: "more.png")!, targetSize: CGSize(width: frame.width * 1, height: frame.width * 1))
+//        listTrackersButton.configuration = configButton
+        listTrackersButton.setImage(resizeImage(image: UIImage(named: "more.png")!, targetSize: CGSize(width: frame.width * 1, height: frame.width * 1)), for: .normal)
         listTrackersButton.addTarget(self, action: #selector(showListTrackers), for: .touchUpInside)
         self.addSubview(listTrackersButton)
     }
     func setChoiceMap() {
         choiceMapButton.frame = CGRect(x: frame.width - (frame.width * 0.075 + frame.width * 0.1), y: frame.height * 0.2, width: frame.width * 0.1, height: frame.width * 0.1)
-        var config = UIButton.Configuration.plain()
-        config.image = resizeImage(image: UIImage(named: "maps.png")!, targetSize:CGSize(width: frame.width * 0.1, height: frame.width * 0.1) )
-        
-        choiceMapButton.configuration = config
-        
+//        var config = UIButton.Configuration.plain()
+//        config.image = resizeImage(image: UIImage(named: "maps.png")!, targetSize:CGSize(width: frame.width * 0.1, height: frame.width * 0.1) )
+//        
+//        choiceMapButton.configuration = config
+        choiceMapButton.setImage(resizeImage(image: UIImage(named: "maps.png")!, targetSize:CGSize(width: frame.width * 1, height: frame.width * 1) ), for: .normal)
         choiceMapButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
         
         self.addSubview(choiceMapButton)
@@ -57,6 +67,9 @@ class ToolBar: UIView{
     @objc func showListTrackers() {
         mainView.view.addSubview(mainView.listTrackers)
         UIView.animate(withDuration: 0.5) { mainView.listTrackers.frame.origin.x = 0 }
+    }
+    @objc func showConsole() {
+        mainView.view.addSubview(mainView.console)
     }
 }
 

@@ -1,0 +1,30 @@
+//
+//  Tracker.swift
+//  GPS
+//
+//  Created by Marin on 04.01.2025.
+//
+import UIKit
+class Tracker {
+    var lat: Double!
+    var long: Double!
+    var name: String!
+    var id: Int!
+    var battery: Int!
+    var connectionGPS:Conection
+    var connectionNET:Conection
+    static var counts = 0
+    init() {
+        lat = Double.random(in: -10...30)
+        long = Double.random(in: 0...50)
+        id = Tracker.counts
+        battery = Int.random(in: 10...85)
+        let names:[String] = ["BMW m5","AMG","AUDI","OPEL","LADA","VOLVO","Subaru"]
+        name = names[Int.random(in: 0..<names.count)]
+        connectionGPS = .missing
+        connectionNET = .missing
+        Tracker.counts += 1
+        print(name! + " create")
+    }
+   
+}

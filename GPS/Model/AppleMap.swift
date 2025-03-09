@@ -22,7 +22,7 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
         map.setRegion(region, animated: true)
         super.init()
         trackers.forEach{ map.addAnnotation($0) }
-//        map.delegate = self
+        map.delegate = self
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -33,27 +33,27 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
             let identifer = "annotationTracker"
             annotationView = mapView.dequeueReusableAnnotationView(withIdentifier:identifer)
             if annotationView == nil {
-                annotationView = MKAnnotationView(annotation: annotationTraker,reuseIdentifier: identifer)
+                annotationView = TrackerAnnotationView(reuseIdentifier: identifer)
+                (annotationView as! TrackerAnnotationView).setAnnotation(annotationTraker)
             }
             else {
-                annotationView.annotation = annotationTraker
+                (annotationView as! TrackerAnnotationView).setAnnotation(annotationTraker)
             }
             
-            annotationView.image = resizeImage(image: UIImage(named:"tracking.png")!, targetSize: CGSize(width: 25, height: 25))
         }
-        else {
-            let identifer = "annotationSelf"
-            let annotationSelf = annotation as! MKPointAnnotation
-            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
-            if annotationView == nil {
-                annotationView = MKAnnotationView(annotation: annotationSelf,reuseIdentifier: identifer)
-            }
-            else {
-                annotationView.annotation = annotationSelf
-            }
-            annotationView.image = resizeImage(image: UIImage(named:"selfLocation.png")!, targetSize: CGSize(width: 25, height: 25))
-        }
-        annotationView.canShowCallout = true
+//        else {
+//            let identifer = "annotationSelf"
+//            let annotationSelf = annotation as! MKPointAnnotation
+//            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
+//            if annotationView == nil {
+//                annotationView = MKAnnotationView(annotation: annotationSelf,reuseIdentifier: identifer)
+//            }
+//            else {
+//                print("2 != nil")
+//                annotationView.annotation = annotationSelf
+//            }
+//        }
+        annotationView.canShowCallout = false
 
         return annotationView
     }
@@ -62,8 +62,9 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
         for i in 0..<STServer.trackers.count {
             let tracker = STServer.trackers[i]
             trackers[i].coordinate = CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
-            trackers[i].title = String(tracker.id)
-            trackers[i].subtitle = tracker.name
+            trackers[i].title = tracker.name
+            
+            trackers[i].subtitle = String(tracker.id)
             
         }
     }
@@ -97,4 +98,36 @@ class AnnotationTraker:NSObject,MKAnnotation {
     @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
     var title: String?
     var subtitle: String?
+}
+
+class TrackerAnnotationView: MKAnnotationView {
+    lazy var titleLabel = UILabel()
+    lazy var subtitleLabel = UILabel()
+    
+     init(reuseIdentifier:String?) {
+        super.init(annotation: nil, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    private func setupUI() {
+        self.image = resizeImage(image: UIImage(named:"tracking.png")!, targetSize: CGSize(width: 25, height: 25))
+        titleLabel =  UILabel(frame: CGRect(x: frame.width * -2.5, y: frame.height + 2, width: frame.width * 6, height: 14))
+        titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold) // шрифт 14, жирный
+        titleLabel.textColor = .systemGray6 // белый цвет текста
+        titleLabel.textAlignment = .center // выравнивание по центру
+        titleLabel.layer.shadowColor = UIColor.white.cgColor // черная тень
+        titleLabel.layer.shadowOpacity = 0.5 // прозрачность тени
+        titleLabel.layer.shadowOffset = CGSize(width: 2, height: 2) // смещение тени
+        titleLabel.layer.shadowRadius = 3 // радиус тени
+        //subtitleLabel = UILabel(frame: CGRect(x: frame.width * -3, y: frame.height + 16, width: frame.width * 6, height: 14))
+        self.addSubview(titleLabel)
+        //self.addSubview(subtitleLabel)
+    }
+    func setAnnotation(_ annotation:MKAnnotation) {
+        titleLabel.text = (annotation as! AnnotationTraker ).title
+        subtitleLabel.text = (annotation as! AnnotationTraker).subtitle
+    }
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }

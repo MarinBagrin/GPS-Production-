@@ -25,23 +25,22 @@ class ViewController: UIViewController {
         mainView = self
         
         listMaps = ListMaps(superFrame:self.view.frame)
-        listTrackers = ListTrackers(frame: self.view.frame)
         
         // Создаем эффект размытия
-            let blurEffect = UIBlurEffect(style: .light) // .dark, .extraLight, .regular, .prominent
-        
+        let blurEffect = UIBlurEffect(style: .dark) // .dark, .extraLight, .regular, .prominent
+            
              // Создаем представление с этим эффектом
         
             blurView = UIVisualEffectView(effect: blurEffect)
-            blurView.frame = CGRect(x: 0, y: view.frame.height * 0.915, width: view.frame.width, height: view.frame.height) // Растягиваем на весь_экр
+            blurView.frame = CGRect(x: 0, y: view.frame.height * 0.88, width: view.frame.width, height: view.frame.height) // Растягиваем на весь_экр
             blurView.layer.cornerRadius = 20
             blurView.clipsToBounds = true
             
              // Добавляем размытие на фон
              view.addSubview(blurView)
         
-        actionMenu = ActionMenu(frame: self.view.frame)
-        self.view.addSubview(actionMenu)
+        //actionMenu = ActionMenu(frame: self.view.frame)
+        //self.view.addSubview(actionMenu)
         toolBarSlide = ToolBarSlide(frame: self.view.frame)
         self.view.addSubview(toolBarSlide)
         //toolBar = ToolBar(superFrame: self.view.frame)
@@ -50,33 +49,45 @@ class ViewController: UIViewController {
         //authentication = Authentication(frame:self.view.frame)
         //self.view.addSubview(authentication)
         //console = Console(frame: self.view.frame)
+        //listTrackers = ListTrackers(frame: self.view.frame)
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        self.view.addGestureRecognizer(tapGesture)
         
-        
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
     }
     override func loadView() {
         super.loadView()
         print("Main loadView")
-
-//        connectWithServer.startConnection()
-//        DispatchQueue.global().async {
-//            while true {
-//                Thread.sleep(forTimeInterval: 3)
-//                
-//                for tracker in STServer.trackers {
-//                    tracker.lat += Double.random(in: -1...1)
-//                    tracker.long += Double.random(in: -1...1)
-//                }
-//                //
-//                DispatchQueue.main.async {
-//                    for map in mainView.listMaps.activeView.maps {
-//                        map.updateTrackers()
-//                    }
-//                }
-////              self.connectWithServer.sendRequest()
-//                print("----")
-//            }
-//        }
+        
+        DispatchQueue.global().async {
+            while true {
+                Thread.sleep(forTimeInterval: 5)
+                
+                for tracker in STServer.trackers {
+                    tracker.lat += Double.random(in: -1...1)
+                    tracker.long += Double.random(in: -1...1)
+                    tracker.battery += Int.random(in: -1...1)
+                    tracker.connectionGPS = [Conection.medium,Conection.missing,Conection.stable][Int.random(in: 0..<3)]
+                    tracker.connectionNET = [Conection.medium,Conection.missing,Conection.stable][Int.random(in: 0..<3)]
+                }
+                //
+                DispatchQueue.main.async {
+                    for map in mainView.listMaps.activeView.maps {
+                        map.updateTrackers()
+                    }
+                    
+                    mainView.toolBarSlide.listTrackers.reloadData()
+                    //print("Reload from main async", STServer.filteredTrackers.count)
+                    
+                }
+            }
+        }
     }
+    
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)

@@ -19,8 +19,13 @@ class BatteryView: UIView {
     }
     
     private func setupUIView() {
+
+
         procentsLabel.layer.cornerRadius = 5
-        fillView.layer.cornerRadius = 5
+        procentsLabel.font = UIFont.systemFont(ofSize: 4, weight: .bold)
+        
+        fillView.layer.cornerRadius = 6
+        //fillView.backgroundColor = UIColor.green.withAlphaComponent(0.6)
         procentsLabel.layer.borderWidth = 2
         
         
@@ -32,14 +37,6 @@ class BatteryView: UIView {
         fillView.addSubview(procentsLabel)
         
         fillViewTopConstraint = fillView.topAnchor.constraint(equalTo: self.topAnchor, constant: 0)
-        
-        NSLayoutConstraint.activate([
-            procentsLabel.topAnchor.constraint(equalTo: self.topAnchor),
-            procentsLabel.bottomAnchor.constraint(equalTo: fillView.bottomAnchor),
-            procentsLabel.leadingAnchor.constraint(equalTo: fillView.leadingAnchor),
-            procentsLabel.trailingAnchor.constraint(equalTo: fillView.trailingAnchor)
-        ])
-        
         NSLayoutConstraint.activate([
             fillViewTopConstraint,
             fillView.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 0.40),
@@ -47,14 +44,21 @@ class BatteryView: UIView {
             fillView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
         ])
         
+        NSLayoutConstraint.activate([
+            procentsLabel.topAnchor.constraint(equalTo: self.topAnchor,constant: -2),
+            procentsLabel.bottomAnchor.constraint(equalTo: fillView.bottomAnchor,constant: 2),
+            procentsLabel.leadingAnchor.constraint(equalTo: fillView.leadingAnchor,constant: -2),
+            procentsLabel.trailingAnchor.constraint(equalTo: fillView.trailingAnchor,constant: 2)
+        ])
+
+    
         
     }
     func setLevel(procentsLevel: Int){
         procent = Int(procentsLevel)
-        fillView.backgroundColor = UIColor.black
         if (procentsLevel >= 75 ) { fillView.backgroundColor = UIColor.green.withAlphaComponent(0.6)}
-        else if (procentsLevel >= 25 ) { fillView.backgroundColor = UIColor.orange}
-        else if (procentsLevel >= 0 ) { fillView.backgroundColor = UIColor.red}
+        else if (procentsLevel >= 25 ) { fillView.backgroundColor = UIColor.orange.withAlphaComponent(1)}
+        else if (procentsLevel >= 0 ) { fillView.backgroundColor = UIColor.red.withAlphaComponent(1)}
         procentsLabel.text = String(format: "%d%%", procent)
     }
     override func layoutSubviews() {

@@ -2,37 +2,45 @@ import UIKit
 
 
 enum Conection {
-    case missing, medium, stable
+    case missing, low, low_medium, medium, stable
 }
 
 class TrackerInfoCell:UITableViewCell {
     var stackCell:TrackerCellStack!
-    
+    var tracker:Tracker!
     init(tracker:Tracker) {
         super.init(style: .default, reuseIdentifier: "tracker")
         
         stackCell = TrackerCellStack(name: tracker.name, id: tracker.id, battery: tracker.battery, typeGpsConnection: tracker.connectionGPS, typeNetConnection: tracker.connectionNET)
-            
+        self.tracker = tracker
+        
+        let tapSetCamera = UITapGestureRecognizer(target: self, action: #selector(handleSetCamera))
+        self.addGestureRecognizer(tapSetCamera)
         
         setupUI()
         print("create new")
     }
     private func setupUI() {
-        self.backgroundColor = UIColor.systemGray6.withAlphaComponent(0.75)
+        self.backgroundColor = UIColor.systemGray5.withAlphaComponent(0.75)
         self.contentView.addSubview(stackCell)
+        stackCell.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             stackCell.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 5),
             stackCell.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -5),
             stackCell.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
             stackCell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -5)
         ])
-        stackCell.translatesAutoresizingMaskIntoConstraints = false
+        
     }
     
     func update(tracker:Tracker) {
         stackCell.update(tracker:tracker)
     }
     
+    @objc func handleSetCamera() {
+        mainView.listMaps.activeView.maps[1].setCameraOnTracker(trackerShowMap: tracker)
+    }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -59,6 +67,7 @@ class TrackerCellStack: UIStackView {
         self.name.layer.shadowOffset = CGSize(width: 2, height: 2) // смещение тени
         self.name.layer.shadowRadius = 3 // радиус тени
         self.battery.setLevel(procentsLevel: battery)
+        self.isUserInteractionEnabled = true
 //        switch typeNetConnection {
 //        case Conection.missing:
 //            self.typeNetConnection.img = UIImageView(image: UIImage(named: "signal-status-missing.png"))
@@ -89,6 +98,11 @@ class TrackerCellStack: UIStackView {
             name.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 1),
             //battery.widthAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.60)
         ])
+        name.isUserInteractionEnabled = false
+        battery.isUserInteractionEnabled = false
+        typeGpsConnection.isUserInteractionEnabled = false
+        typeNetConnection.isUserInteractionEnabled = false
+        self.isUserInteractionEnabled = true
     }
     private func setupStack() {
         axis = .horizontal // Или .vertical
@@ -112,10 +126,17 @@ class TrackerCellStack: UIStackView {
         switch tracker.connectionNET {
         case Conection.missing:
             self.typeNetConnection.setImage(img: UIImage(named: "signal-status-missing.png")!)
+        case Conection.low:
+            self.typeNetConnection.setImage(img: UIImage(named: "signal-status-low.png")!)
+        case Conection.low_medium:
+            self.typeNetConnection.setImage(img: UIImage(named: "signal-status-low-medium.png")!)
+
         case Conection.medium:
             self.typeNetConnection.setImage(img: UIImage(named: "signal-status-medium.png")!)
         case Conection.stable:
             self.typeNetConnection.setImage(img: UIImage(named: "signal-status-stable.png")!)
+        
+
         }
         switch tracker.connectionGPS {
         case Conection.missing:
@@ -124,6 +145,11 @@ class TrackerCellStack: UIStackView {
             self.typeGpsConnection.setImage(img: UIImage(named: "satellite-medium.png")!)
         case Conection.stable:
             self.typeGpsConnection.setImage(img: UIImage(named: "satellite-stable.png")!)
+        case Conection.low:
+            break
+        case Conection.low_medium:
+            break
+
         }
     }
     

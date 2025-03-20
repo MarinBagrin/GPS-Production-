@@ -8,14 +8,13 @@ import UIKit
 import GoogleMaps
 
 var mainView:ViewController!
-
+var g_server = Socket()
 class ViewController: UIViewController {
     var toolBar: ToolBar!
     var listMaps: ListMaps!
     var authentication: Authentication!
     var listTrackers: ListTrackers!
     var actionMenu: ActionMenu!
-    var connectWithServer = Socket()
     var console:Console!
     var toolBarSlide: ToolBarSlide!
     var blurView: UIVisualEffectView!
@@ -46,13 +45,19 @@ class ViewController: UIViewController {
         //toolBar = ToolBar(superFrame: self.view.frame)
         //self.view.addSubview(toolBar)
         //Autorization
-        //authentication = Authentication(frame:self.view.frame)
-        //self.view.addSubview(authentication)
+        authentication = Authentication(frame:self.view.frame)
+        self.view.addSubview(authentication)
         //console = Console(frame: self.view.frame)
         //listTrackers = ListTrackers(frame: self.view.frame)
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         self.view.addGestureRecognizer(tapGesture)
+        //print(name! + " create")
+        let t = STServer.trackers[10]
+        t.lat += 76
+        t.long += -54
+        t.name = "Игорь"
+        
         
     }
     
@@ -62,7 +67,7 @@ class ViewController: UIViewController {
     override func loadView() {
         super.loadView()
         print("Main loadView")
-        
+        g_server.startConnection()
         DispatchQueue.global().async {
             while true {
                 Thread.sleep(forTimeInterval: 5)
@@ -71,8 +76,9 @@ class ViewController: UIViewController {
                     tracker.lat += Double.random(in: -1...1)
                     tracker.long += Double.random(in: -1...1)
                     tracker.battery += Int.random(in: -1...1)
-                    tracker.connectionGPS = [Conection.medium,Conection.missing,Conection.stable][Int.random(in: 0..<3)]
-                    tracker.connectionNET = [Conection.medium,Conection.missing,Conection.stable][Int.random(in: 0..<3)]
+                    tracker.connectionGPS = [Conection.medium,Conection.missing,Conection.stable,Conection.low][Int.random(in: 0..<3)]
+                    tracker.connectionNET = [Conection.medium,Conection.low_medium,Conection.missing,Conection.stable,Conection.low][Int.random(in: 0..<4)]
+                    //tracker.setAddress()
                 }
                 //
                 DispatchQueue.main.async {
@@ -81,6 +87,7 @@ class ViewController: UIViewController {
                     }
                     
                     mainView.toolBarSlide.listTrackers.reloadData()
+                    CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
                     //print("Reload from main async", STServer.filteredTrackers.count)
                     
                 }

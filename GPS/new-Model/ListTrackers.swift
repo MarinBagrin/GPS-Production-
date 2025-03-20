@@ -10,12 +10,13 @@ class ListTrackers: UITableView{
     init(frame:CGRect) {
         super.init(frame: frame, style: .plain)
         SIZE_CELL = CGSize(width: frame.width, height: frame.height * 0.15)
-        self.backgroundColor = .white.withAlphaComponent(0.40)
+        self.backgroundColor = .white.withAlphaComponent(0.10)
         self.layer.cornerRadius = 5
         self.layer.shadowColor = UIColor.black.cgColor
         self.layer.shadowOffset = CGSize(width: 0, height: 2)
         self.layer.shadowRadius = 4
         self.layer.shadowOpacity = 0.3
+
     }
     
     required init?(coder: NSCoder) {
@@ -51,10 +52,11 @@ extension ToolBarSlide: UITableViewDataSource, UITableViewDelegate {
     }
     
     // Обработка выбора ячейки
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        print("Выбрана строка: \(indexPath.row)")
-    }
+//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        tableView.deselectRow(at: indexPath, animated: true)
+//        mainView.listMaps.activeView.maps[1].setCameraOnTracker(trackerShowMap: STServer.filteredTrackers[indexPath.row])
+//        print("Выбрана строка: \(indexPath.row)")
+//    }
 }
 
 func showMainView() {
@@ -66,6 +68,13 @@ func showMainView() {
                 continue
             }
             if subView is ToolBar {
+                continue
+            }
+            if subView is ToolBarSlide {
+                setPosXTollBar(duration: 0.2, y: 0.88)
+                continue
+            }
+            if subView is UIVisualEffectView {
                 continue
             }
             if subView is ActionMenu {

@@ -63,15 +63,16 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
             let tracker = STServer.trackers[i]
             trackers[i].coordinate = CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
             trackers[i].title = tracker.name
-            
             trackers[i].subtitle = String(tracker.id)
+            trackers[i].tracker = STServer.trackers[i]
             
         }
     }
     func setCameraOnTracker(trackerShowMap: Tracker) {
         initialLocation = CLLocationCoordinate2D(latitude: trackerShowMap.lat, longitude: trackerShowMap.long)
-        region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 5000, longitudinalMeters: 5000)
+        region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 20000, longitudinalMeters: 20000)
         map.setRegion(region, animated: true)
+        showMainView()
     }
     func updateSelfLocation(location:CLLocationCoordinate2D) {
         if !(map.annotations.last  is MKPointAnnotation) {
@@ -96,32 +97,56 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
 }
 class AnnotationTraker:NSObject,MKAnnotation {
     @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
+    
     var title: String?
     var subtitle: String?
+    var tracker:Tracker!
 }
 
 class TrackerAnnotationView: MKAnnotationView {
     lazy var titleLabel = UILabel()
     lazy var subtitleLabel = UILabel()
-    
+    var callout = CalloutView()
+    var blurView = UIVisualEffectView()
+
      init(reuseIdentifier:String?) {
-        super.init(annotation: nil, reuseIdentifier: reuseIdentifier)
-        setupUI()
+         super.init(annotation: nil, reuseIdentifier: reuseIdentifier)
+         setupUI()
+         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showCallout))
+         self.addGestureRecognizer(tapGesture)
     }
     
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named:"tracking.png")!, targetSize: CGSize(width: 25, height: 25))
+        callout.alpha = 0
+        self.image = resizeImage(image: UIImage(named:"transportation-4.png")!, targetSize: CGSize(width: 50, height: 50))
         titleLabel =  UILabel(frame: CGRect(x: frame.width * -2.5, y: frame.height + 2, width: frame.width * 6, height: 14))
-        titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold) // шрифт 14, жирный
-        titleLabel.textColor = .systemGray6 // белый цвет текста
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold) // шрифт 14, жирный
+        titleLabel.textColor = .white // белый цвет текста
         titleLabel.textAlignment = .center // выравнивание по центру
-        titleLabel.layer.shadowColor = UIColor.white.cgColor // черная тень
-        titleLabel.layer.shadowOpacity = 0.5 // прозрачность тени
+        titleLabel.layer.shadowColor = UIColor.black.cgColor // белая тень
+        titleLabel.layer.shadowOpacity = 0.85 // прозрачность тени
         titleLabel.layer.shadowOffset = CGSize(width: 2, height: 2) // смещение тени
-        titleLabel.layer.shadowRadius = 3 // радиус тени
-        //subtitleLabel = UILabel(frame: CGRect(x: frame.width * -3, y: frame.height + 16, width: frame.width * 6, height: 14))
+        titleLabel.layer.shadowRadius = 1 // радиус тени
+        self.addSubview(blurView)
         self.addSubview(titleLabel)
-        //self.addSubview(subtitleLabel)
+        self.addSubview(callout)
+
+
+        NSLayoutConstraint.activate([
+            callout.bottomAnchor.constraint(equalTo: self.topAnchor,constant: -2.5),
+            callout.topAnchor.constraint(equalTo: self.topAnchor,constant: -230),
+            callout.leadingAnchor.constraint(equalTo: self.leadingAnchor,constant: -115),
+            callout.trailingAnchor.constraint(equalTo: self.trailingAnchor,constant: 115),
+        ])
+        let blurEffect = UIBlurEffect(style: .extraLight) // .dark, .extraLight, .regular, .prominent
+            
+             // Создаем представление с этим эффектом
+        
+        blurView = UIVisualEffectView(effect: blurEffect)
+        blurView.frame = titleLabel.frame
+        blurView.clipsToBounds = true
+            
+             // Добавляем размытие на фон
     }
     func setAnnotation(_ annotation:MKAnnotation) {
         titleLabel.text = (annotation as! AnnotationTraker ).title
@@ -129,5 +154,10 @@ class TrackerAnnotationView: MKAnnotationView {
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc func showCallout() {
+        self.callout.showHide()
+        self.callout.updateData(tracker: (annotation as! AnnotationTraker).tracker)
     }
 }

@@ -25,7 +25,7 @@ class ListMaps: UIView, ProListMaps {
         backView = BackView(frame: CGRect(x: 0, y: 0, width: frame.width, height: frame.height ))
         self.addSubview(backView)
         
-        mainView.view.addSubview(activeView.maps[1].getUIView())
+        mainView.view.addSubview(activeView.maps[0].getUIView())
         
     }
     required init?(coder: NSCoder) {
@@ -36,7 +36,7 @@ class ListMaps: UIView, ProListMaps {
 
 class ActiveView: UIView {
     
-    var maps:[UIMap] = [GoogleMap(mainView.view.frame),AppleMap(mainView.view.frame)]
+    var maps:[UIMap] = [AppleMap(mainView.view.frame)]
     var buttons:[UIButton] = []
     
     init(superFrame: CGRect) {
@@ -64,6 +64,12 @@ class ActiveView: UIView {
             self.addSubview(button)
             buttons.append(button)
 
+        }
+    }
+    func checkAndAppendTrackers() {
+        for map in maps {
+            map.checkAndAppendTrackers()
+            print("CheckAndAppendTrackers")
         }
     }
     @objc func showMap(_ sender:UIButton) {

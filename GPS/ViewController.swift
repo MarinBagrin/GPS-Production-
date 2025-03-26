@@ -21,6 +21,46 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        DispatchQueue.global().async {
+
+            while true {
+
+                if (g_server.isConnected == false) {
+                    g_server.connection.cancel()
+                    g_server = Socket()
+                    g_server.startConnection()
+                    print("perezapysk")
+                }
+                sleep(5)
+
+                if (!g_server.isLeasinig ) {g_server.recieveDataTrackers()
+                print("recieveData")}
+
+                
+                //Thread.sleep(forTimeInterval: 0.5)
+
+                DispatchQueue.main.async {
+                    for map in mainView.listMaps.activeView.maps {
+                        map.updateTrackers()
+                    }
+                    if ((self.toolBarSlide.searchTracker.text ?? "").isEmpty && STServer.filteredTrackers.isEmpty ) {
+                        STServer.filteredTrackers = STServer.trackers
+                    }
+                    
+                    mainView.toolBarSlide.listTrackers.reloadData()
+                    CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
+                }
+            }
+        }
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    override func loadView() {
+        super.loadView()
+        print("Main loadView")
         mainView = self
         
         listMaps = ListMaps(superFrame:self.view.frame)
@@ -53,48 +93,9 @@ class ViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         self.view.addGestureRecognizer(tapGesture)
         //print(name! + " create")
-        let t = STServer.trackers[10]
-        t.lat += 76
-        t.long += -54
-        t.name = "Игорь"
-        
+        print("Progrizlosi View")
         
     }
-    
-    @objc func dismissKeyboard() {
-        view.endEditing(true)
-    }
-    override func loadView() {
-        super.loadView()
-        print("Main loadView")
-        g_server.startConnection()
-        DispatchQueue.global().async {
-            while true {
-                Thread.sleep(forTimeInterval: 5)
-                
-                for tracker in STServer.trackers {
-                    tracker.lat += Double.random(in: -1...1)
-                    tracker.long += Double.random(in: -1...1)
-                    tracker.battery += Int.random(in: -1...1)
-                    tracker.connectionGPS = [Conection.medium,Conection.missing,Conection.stable,Conection.low][Int.random(in: 0..<3)]
-                    tracker.connectionNET = [Conection.medium,Conection.low_medium,Conection.missing,Conection.stable,Conection.low][Int.random(in: 0..<4)]
-                    //tracker.setAddress()
-                }
-                //
-                DispatchQueue.main.async {
-                    for map in mainView.listMaps.activeView.maps {
-                        map.updateTrackers()
-                    }
-                    
-                    mainView.toolBarSlide.listTrackers.reloadData()
-                    CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
-                    //print("Reload from main async", STServer.filteredTrackers.count)
-                    
-                }
-            }
-        }
-    }
-    
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)

@@ -39,7 +39,11 @@ class TrackerInfoCell:UITableViewCell {
     }
     
     @objc func handleSetCamera() {
-        mainView.listMaps.activeView.maps[1].setCameraOnTracker(trackerShowMap: tracker)
+        if (tracker.long != 0 && tracker.lat != 0) {
+            
+            print(tracker.name!, tracker.long!, tracker.lat!)
+            mainView.listMaps.activeView.maps[0].setCameraOnTracker(trackerShowMap: tracker)
+        }
     }
 
     required init?(coder: NSCoder) {

@@ -39,10 +39,11 @@ extension ToolBarSlide: UITableViewDataSource, UITableViewDelegate {
     
     // Ячейка для строки в таблице
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "tracker") ?? TrackerInfoCell(tracker:STServer.filteredTrackers[indexPath.row])
-        (cell as! TrackerInfoCell).update(tracker:STServer.filteredTrackers[indexPath.row])
+        //let cell = tableView.dequeueReusableCell(withIdentifier: "tracker") ?? TrackerInfoCell(tracker:STServer.filteredTrackers[indexPath.row])
+        //(cell as! TrackerInfoCell).update(tracker:STServer.filteredTrackers[indexPath.row])
         //cell?.textLabel?.text = STServer.trackers[indexPath.row].name // Настройка ячейки
         //print((cell as! TrackerInfoCell).name.text!)
+        let cell = TrackerInfoCell(tracker: STServer.filteredTrackers[indexPath.row])
         return cell
     }
     

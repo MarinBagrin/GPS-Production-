@@ -12,7 +12,7 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
     let map: MKMapView
     var initialLocation: CLLocationCoordinate2D
     var region: MKCoordinateRegion
-    var trackers:[AnnotationTraker] = (0..<STServer.trackers.count).map{_ in AnnotationTraker()}
+    var trackers:[AnnotationTraker] = []
     var selfLoaction = MKPointAnnotation()
     
     init(_ superFrame: CGRect) {
@@ -59,12 +59,19 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
     }
     
     func updateTrackers() {
-        for i in 0..<STServer.trackers.count {
-            let tracker = STServer.trackers[i]
-            trackers[i].coordinate = CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
-            trackers[i].title = tracker.name
-            trackers[i].subtitle = String(tracker.id)
-            trackers[i].tracker = STServer.trackers[i]
+        for i in 0..<trackers.count {
+            if (STServer.trackers[i].lat != 0 && STServer.trackers[i].long != 0) {
+                mapView(map, viewFor: trackers[i])?.isHidden = true
+                (mapView(map, viewFor: trackers[i]) as! TrackerAnnotationView).isHidden = true
+                let tracker = STServer.trackers[i]
+                trackers[i].coordinate = CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
+                trackers[i].title = tracker.name
+                trackers[i].subtitle = String(tracker.id)
+                trackers[i].tracker = STServer.trackers[i]
+            }
+            else {
+                mapView(map, viewFor: trackers[i])?.isHidden = false
+            }
             
         }
     }
@@ -80,12 +87,23 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
         }
         selfLoaction.coordinate = location
     }
-       
+    
+    func checkAndAppendTrackers() {
+        if (trackers.count == 0) {
+            trackers = (0..<STServer.trackers.count).map{_ in AnnotationTraker()}
+            trackers.forEach{ map.addAnnotation($0) }
+        }
+    }
+
+    
     func stopUpdatingSelfLoaction() {
         map.removeAnnotation(selfLoaction)
     }
 
-
+    func clearListAnnotations() {
+        map.removeAnnotations(trackers)
+        trackers.removeAll()
+    }
     func getUIView() -> UIView {
         return map
     }
@@ -118,8 +136,8 @@ class TrackerAnnotationView: MKAnnotationView {
     
     private func setupUI() {
         callout.alpha = 0
-        self.image = resizeImage(image: UIImage(named:"transportation-4.png")!, targetSize: CGSize(width: 50, height: 50))
-        titleLabel =  UILabel(frame: CGRect(x: frame.width * -2.5, y: frame.height + 2, width: frame.width * 6, height: 14))
+        self.image = resizeImage(image: UIImage(named:"transportation-4.png")!, targetSize: CGSize(width: 40, height: 40))
+        //titleLabel =  UILabel(frame: CGRect(x: frame.width * -2.5, y: frame.height + 2, width: frame.width * 6, height: 14))
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold) // шрифт 14, жирный
         titleLabel.textColor = .white // белый цвет текста
         titleLabel.textAlignment = .center // выравнивание по центру
@@ -127,11 +145,18 @@ class TrackerAnnotationView: MKAnnotationView {
         titleLabel.layer.shadowOpacity = 0.85 // прозрачность тени
         titleLabel.layer.shadowOffset = CGSize(width: 2, height: 2) // смещение тени
         titleLabel.layer.shadowRadius = 1 // радиус тени
+        titleLabel.text = "amgpid"
         self.addSubview(blurView)
-        self.addSubview(titleLabel)
         self.addSubview(callout)
-
-
+        self.addSubview(titleLabel)
+        titleLabel.isHidden = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: self.bottomAnchor),
+            titleLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.3),
+            titleLabel.widthAnchor.constraint(equalTo: self.heightAnchor, multiplier: 3),
+            titleLabel.centerXAnchor.constraint(equalTo: self.centerXAnchor)
+        ])
         NSLayoutConstraint.activate([
             callout.bottomAnchor.constraint(equalTo: self.topAnchor,constant: -2.5),
             callout.topAnchor.constraint(equalTo: self.topAnchor,constant: -230),
@@ -151,6 +176,7 @@ class TrackerAnnotationView: MKAnnotationView {
     func setAnnotation(_ annotation:MKAnnotation) {
         titleLabel.text = (annotation as! AnnotationTraker ).title
         subtitleLabel.text = (annotation as! AnnotationTraker).subtitle
+
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

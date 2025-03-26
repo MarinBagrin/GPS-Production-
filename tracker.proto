@@ -1,11 +1,15 @@
 syntax = "proto3";
 message tracker {
   int32 speed = 1;
-  float battery = 2;
+  int32 battery = 2;
   string coordinates = 3;
   bool power = 5;
   string id = 6;
   string time_track = 7;
+  string name = 8;
+  string longitude = 9;
+  string latitude = 10;
+  
 }
 message tracker_list {
   repeated tracker trackers = 1;

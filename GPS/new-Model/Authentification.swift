@@ -11,6 +11,7 @@ class Authentication: UIView {
     
     var menuAuth: MenuAuth!
     var blurView: UIVisualEffectView!
+    var organisation: String!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -38,6 +39,9 @@ class MenuAuth: UIView {
     var password:UITextField = UITextField()
     var checkAuth:UIButton = UIButton()
     var copyright: UILabel = UILabel()
+    var tryConnectServer = UIView()
+    var logInfo = UILabel()
+    var state:String!
     //
     lazy var unitateY = frame.height / 10
     lazy var unitateX = frame.width / 10
@@ -52,6 +56,21 @@ class MenuAuth: UIView {
         setLoggin()
         setCheckAuth()
         setCopyright()
+        setLogInfo()
+        setTryConnectServer()
+    }
+    //
+    func setTryConnectServer() {
+        tryConnectServer.frame = self.bounds
+        tryConnectServer.backgroundColor = .black.withAlphaComponent(0.75)
+        logInfo.text = "Server connection attempt"
+        setActiveTryingConnect()
+    }
+    //
+    func setLogInfo() {
+        logInfo.font = UIFont(name: "Arial", size: 20)
+        logInfo.frame = CGRect(x: frame.width * 0, y: frame.height * 0.05, width: frame.width , height: frame.height * 0.05)
+        logInfo.textAlignment = .center
     }
     //
     func setLoggin() {
@@ -71,9 +90,11 @@ class MenuAuth: UIView {
             string: "    Login",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
         )
-        var spaceLeft = UIView(frame: CGRect(x: 0, y: 0, width: login.frame.width * 0.05, height: login.frame.height))
+        let spaceLeft = UIView(frame: CGRect(x: 0, y: 0, width: login.frame.width * 0.05, height: login.frame.height))
         login.leftView = spaceLeft
         self.addSubview(login)
+        self.login.text = "Onica2"
+        self.password.text = "Onica2"
     }
     //
     private func setPaswword() {
@@ -117,6 +138,78 @@ class MenuAuth: UIView {
         self.addSubview(copyright)
     
     }
+     func setActiveTryingConnect() {
+        logInfo.text = "Server connection attempt"
+        logInfo.removeFromSuperview()
+        logInfo.textColor = .white
+
+        tryConnectServer.addSubview(logInfo)
+        self.addSubview(tryConnectServer)
+        DispatchQueue.global().async {
+            while(g_server.isConnected == false) {
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Server connection attempt"
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Server connection attempt."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Server connection attempt.."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Server connection attempt..."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+
+            }
+            self.setUnActiveTryingConnect()
+        }
+            
+        
+    }
+    func setUnActiveTryingConnect() {
+        DispatchQueue.main.async{
+            
+            self.logInfo.text = "Please authentificate!"
+            self.logInfo.removeFromSuperview()
+            self.logInfo.textColor = .systemBlue
+            self.addSubview(self.logInfo)
+            self.tryConnectServer.removeFromSuperview()
+        }
+    }
+    func setLogInfoCheckAuth() {
+        DispatchQueue.global().async{
+            while( self.state != "UnAllowAuth" && self.state != "AllowAuth") {
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Authenticating Please wait."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Authenticating. Please wait."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Authenticating.. Please wait."
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Authenticating... Please wait."
+                }
+            }
+            if (self.state == "AllowAuth") {
+                self.setUnActiveTryingConnect()
+            }
+            else {
+                DispatchQueue.main.async{
+                    self.logInfo.text = "Sorry, your password or login are not corrected"
+                }
+            }
+            self.state = ""
+        }
+    }
    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -125,7 +218,7 @@ class MenuAuth: UIView {
     @objc func pressedCheckAuth(){
         UIView.animate(withDuration: 0.5){
             self.checkAuth.backgroundColor = .systemGreen.withAlphaComponent(0.80)
-            var frameCA = self.checkAuth.frame
+            let frameCA = self.checkAuth.frame
             self.checkAuth.frame = CGRect(x: frameCA.origin.x - 6, y: frameCA.origin.y - 6, width: frameCA.width + 12, height: frameCA.height + 12)
         }
     }
@@ -133,14 +226,15 @@ class MenuAuth: UIView {
         ///проверка на то если введенные данные верны и если да то загрузка в базу данных с удаленного сервера всех данных об этои пользователе/ в это слуае у меня пока что нету данных серверу и по этому я сдлеаю так что бы при нажатие кнопки якобы юзер заходил в систему
 //        mainView.authentication.removeFromSuperview()
         g_server.sendMessage(text: (login.text ?? "") + "/" + (password.text ?? "") + "/")
-        g_server.receiveData()
-        self.login.text = ""
-        self.password.text = ""
+        //g_server.receiveData()
+        self.login.text = "Onica2"
+        self.password.text = "Onica2"
         UIView.animate(withDuration: 0.250){
             self.checkAuth.backgroundColor = .systemGreen.withAlphaComponent(0.375)
-            var frameCA = self.checkAuth.frame
+            let frameCA = self.checkAuth.frame
             self.checkAuth.frame = CGRect(x: frameCA.origin.x + 6, y: frameCA.origin.y + 6, width: frameCA.width - 12, height: frameCA.height - 12)
         }
+        setLogInfoCheckAuth()
     }
 }
 

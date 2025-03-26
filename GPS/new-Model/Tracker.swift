@@ -18,19 +18,12 @@ class Tracker {
     var connectionNET:Conection
     static var counts = 0
     init() {
-        lat = Double.random(in: -10...30)
-        long = Double.random(in: 0...50)
         id = Tracker.counts
-        battery = Int.random(in: 10...85)
-        let names:[String] = ["BMW m5","AMG","AUDI","OPEL","LADA","VOLVO","Subaru"]
-        name = names[Int.random(in: 0..<names.count)]
         connectionGPS = .missing
         connectionNET = .missing
         Tracker.counts += 1
         time = "2025/03/11 - 11:28"
-        //setAddress()
         
-        print(name! + " create")
     }
     func setAddress() {
         let geocoder = CLGeocoder()
@@ -43,12 +36,22 @@ class Tracker {
             
             if let placemark = placemarks?.first {
                 let address = """
-                        Country: \(placemark.country ?? "Неизвестно") City: \(placemark.locality ?? "Неизвестно")Street: \(placemark.thoroughfare ?? "Неизвестно")
+                        Country: \(placemark.country ?? "Неизвестно"), City: \(placemark.locality ?? "Неизвестно"), Street: \(placemark.thoroughfare ?? "Неизвестно")
                         """
                 self.address = address
             }
         }
     }
+//    func setConfiguration(recTracker:tracker) {
+//        lat = Double.random(in: 0...50)
+//        long = Double.random(in: 0...50)
+//        id = Tracker.counts
+//        battery = Int(recTracker.battery)
+//        name = recTracker.name
+//        connectionGPS = .missing
+//        connectionNET = .missing
+//        time = "2025/03/11 - 11:28"
+//    }
 
    
 }

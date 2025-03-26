@@ -15,14 +15,16 @@ class CalloutView: UIView {
         title.font = UIFont.systemFont(ofSize: 18, weight: .bold)
 
         text.translatesAutoresizingMaskIntoConstraints = false
-        self.translatesAutoresizingMaskIntoConstraints = false
-        self.layer.cornerRadius = 5
+        
         
         text.backgroundColor = UIColor.systemGray.withAlphaComponent(0.55)
+        
         text.font = UIFont(name: "Arial", size: 18)
         
-       self.backgroundColor = UIColor.black.withAlphaComponent(0.80)
-        //self.layer.borderWidth = 2
+        self.backgroundColor = UIColor.black.withAlphaComponent(0.80)
+        self.translatesAutoresizingMaskIntoConstraints = false
+        self.layer.cornerRadius = 5
+        self.clipsToBounds = true
         //self.layer.borderColor = UIColor.black.withAlphaComponent(0.5).cgColor
         
         self.addSubview(title)

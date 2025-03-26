@@ -37,7 +37,7 @@ class Console:UIView {
         sendText.addTarget(self, action: #selector(sendDataToServer), for: .touchUpInside)
     }
     @objc func sendDataToServer() {
-        g_server.sendMessage(text:textToServer.text!)
+        //g_server.sendMessage(text:textToServer.text!)
         print(textToServer.text!)
     }
     required init?(coder: NSCoder) {

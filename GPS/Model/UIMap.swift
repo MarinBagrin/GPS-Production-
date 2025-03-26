@@ -12,7 +12,9 @@ protocol UIMap {
     func updateTrackers()
     func setCameraOnTracker(trackerShowMap: Tracker)
     func updateSelfLocation(location:CLLocationCoordinate2D)
-   
+    func checkAndAppendTrackers()
     func stopUpdatingSelfLoaction()
+    func clearListAnnotations() 
+
 }
 

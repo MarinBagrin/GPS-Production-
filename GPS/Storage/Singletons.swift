@@ -8,7 +8,7 @@
 class STServer {
     //    static var login: String!
     //    static var password: String!
-    static var trackers:[Tracker] = [Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker(),Tracker()]
+    static var trackers:[Tracker] = []
     static var filteredTrackers:[Tracker] = trackers
     
     static func filterByTextField(inString:String) {
@@ -62,6 +62,10 @@ class STServer {
             print(i.name!, terminator: " ")
         }
 
+    }
+    static func clearBothListTrackers() {
+        STServer.filteredTrackers = []
+        STServer.trackers = []
     }
     
 }

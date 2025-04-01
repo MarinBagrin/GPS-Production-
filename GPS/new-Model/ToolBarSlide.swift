@@ -17,8 +17,9 @@ class ToolBarSlide:UIView {
         backgroundColor = UIColor.systemGray6.withAlphaComponent(0.60)
         layer.cornerRadius = 20
 
-        setSetingsButton();
         setSearchTracker();
+        setSetingsButton();
+
         setPanGesture();
         
         self.frame = CGRect(x: 0, y: frame.height * 0.88, width: frame.width, height: frame.height)
@@ -40,6 +41,7 @@ class ToolBarSlide:UIView {
     func setSetingsButton() {
         setingsButton = UIButton(frame: CGRect(x: frame.width * 0.85, y: frame.height * 0.20, width: frame.height * 0.45, height: frame.height * 0.45))
         setingsButton.setImage(resizeImage(image: UIImage(named: "settings-icon.png")!,targetSize: CGSize(width: frame.width ,height: frame.width )), for: .normal)
+        setingsButton.addTarget(self, action: #selector(presentSettings), for: .touchUpInside)
         self.addSubview(setingsButton)
     }
     
@@ -49,7 +51,7 @@ class ToolBarSlide:UIView {
         self.addSubview(searchTracker)
         searchTracker.backgroundColor = UIColor.lightGray.withAlphaComponent(0.25)
         searchTracker.layer.cornerRadius = 10
-        searchTracker.placeholder = "Search GPS tracker"
+        searchTracker.placeholder = translate[lang]!["sgtracker"]!
         searchTracker.delegate = self
         
         
@@ -97,7 +99,7 @@ class ToolBarSlide:UIView {
     }
     func setNameSortContainer() {
         nameSortContainer = UILabel(frame: CGRect(x: frame.width * borderTB[2], y: frame.height * 0.0950 , width: frame.width * 0.80, height: frame.height * 0.02))
-        nameSortContainer.text = "Filter by:"
+        nameSortContainer.text = translate[lang]!["sortby"]!
         nameSortContainer.textColor = UIColor.lightGray.withAlphaComponent(0.5)
         self.addSubview(nameSortContainer)
     }
@@ -109,7 +111,9 @@ class ToolBarSlide:UIView {
 
         self.addSubview(listTrackers)
     }
-    
+    @objc func presentSettings() {
+        mainView.present(settingsView,animated: true)
+    }
     @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
        self.searchTracker.resignFirstResponder() // Скрываем клавиатуру при нажатии "Return"
 

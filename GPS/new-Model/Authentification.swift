@@ -42,6 +42,7 @@ class MenuAuth: UIView {
     var tryConnectServer = UIView()
     var logInfo = UILabel()
     var state:String!
+    var setingsButton:UIButton!
     //
     lazy var unitateY = frame.height / 10
     lazy var unitateX = frame.width / 10
@@ -58,15 +59,41 @@ class MenuAuth: UIView {
         setCopyright()
         setLogInfo()
         setTryConnectServer()
+        setSetingsButton()
+        
     }
+    //
+    lazy var tsb = setingsButton.topAnchor.constraint(equalTo: password.bottomAnchor)
+    lazy var lsb = setingsButton.leadingAnchor.constraint(equalTo: password.leadingAnchor)
+    lazy var wsb = setingsButton.widthAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.225)
+    lazy var hsb = setingsButton.heightAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.225)
+    func setSetingsButton() {
+        
+        setingsButton = UIButton(frame: .zero)
+        setingsButton.setImage(resizeImage(image: UIImage(named: "settings-icon.png")!,targetSize: CGSize(width: frame.width ,height: frame.width )), for: .normal)
+        setingsButton.addTarget(self, action: #selector(presentSettings), for: .touchUpInside)
+        self.addSubview(setingsButton)
+
+        setingsButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([tsb,lsb,wsb,hsb])
+    }
+    //
     //
     func setTryConnectServer() {
         tryConnectServer.frame = self.bounds
         tryConnectServer.backgroundColor = .black.withAlphaComponent(0.75)
-        logInfo.text = "Server connection attempt"
+        logInfo.text = translate[lang]!["servconat0"]
         setActiveTryingConnect()
     }
     //
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        lsb.constant = password.frame.width * 0.75
+//        wsb.constant = 1
+        //hsb.constant = password.frame.width * 0.1
+        print(123)
+    }
     func setLogInfo() {
         logInfo.font = UIFont(name: "Arial", size: 20)
         logInfo.frame = CGRect(x: frame.width * 0, y: frame.height * 0.05, width: frame.width , height: frame.height * 0.05)
@@ -86,6 +113,10 @@ class MenuAuth: UIView {
         login.layer.shadowRadius = 4
         login.layer.shadowOpacity = 0.3
         login.textColor = .black
+        if (UserDefaults.standard.bool(forKey: "isSaved")) {
+            login.text = UserDefaults.standard.string(forKey: "login") ?? ""
+        }
+
         login.attributedPlaceholder = NSAttributedString(
             string: "    Login",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
@@ -93,8 +124,7 @@ class MenuAuth: UIView {
         let spaceLeft = UIView(frame: CGRect(x: 0, y: 0, width: login.frame.width * 0.05, height: login.frame.height))
         login.leftView = spaceLeft
         self.addSubview(login)
-        self.login.text = "Onica2"
-        self.password.text = "Onica2"
+       
     }
     //
     private func setPaswword() {
@@ -109,6 +139,9 @@ class MenuAuth: UIView {
         password.layer.shadowRadius = 4
         password.layer.shadowOpacity = 0.3
         password.textColor = .black
+        if (UserDefaults.standard.bool(forKey: "isSaved")) {
+            password.text = UserDefaults.standard.string(forKey: "password") ?? ""
+        }
         password.attributedPlaceholder = NSAttributedString(
             string: "    Password",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
@@ -119,16 +152,23 @@ class MenuAuth: UIView {
     }
     //
     private func setCheckAuth() {
-        checkAuth.setTitle("Log in", for: .normal)
-        checkAuth.frame = CGRect(x: unitateX * 3, y: unitateY * 4 + 20, width:unitateX * 4, height: unitateY)
+        checkAuth.setTitle(translate[lang]!["login"], for: .normal)
+        checkAuth.frame = .zero
         checkAuth.backgroundColor = .systemGreen.withAlphaComponent(0.375)
         checkAuth.layer.borderColor = UIColor.black.cgColor
         checkAuth.layer.borderWidth = 1
         checkAuth.layer.cornerRadius = 2
-        
+        self.addSubview(checkAuth)
+
+        checkAuth.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            checkAuth.topAnchor.constraint(equalTo: password.bottomAnchor, constant:6),
+            checkAuth.leadingAnchor.constraint(equalTo: password.leadingAnchor),
+            checkAuth.widthAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.70),
+//            checkAuth.heightAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.45)
+        ])
         checkAuth.addTarget(self, action: #selector(checkUserAuth), for: [.touchUpInside,.touchUpOutside])
         checkAuth.addTarget(self, action: #selector(pressedCheckAuth), for: .touchDown)
-        self.addSubview(checkAuth)
     }
     //
     private func setCopyright() {
@@ -139,7 +179,7 @@ class MenuAuth: UIView {
     
     }
      func setActiveTryingConnect() {
-        logInfo.text = "Server connection attempt"
+        logInfo.text = translate[lang]!["servconat0"]
         logInfo.removeFromSuperview()
         logInfo.textColor = .white
 
@@ -148,19 +188,19 @@ class MenuAuth: UIView {
         DispatchQueue.global().async {
             while(g_server.isConnected == false) {
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Server connection attempt"
+                    self.logInfo.text = translate[lang]!["servconat0"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Server connection attempt."
+                    self.logInfo.text = translate[lang]!["servconat1"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Server connection attempt.."
+                    self.logInfo.text = translate[lang]!["servconat2"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Server connection attempt..."
+                    self.logInfo.text = translate[lang]!["servconat3"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
 
@@ -173,7 +213,7 @@ class MenuAuth: UIView {
     func setUnActiveTryingConnect() {
         DispatchQueue.main.async{
             
-            self.logInfo.text = "Please authentificate!"
+            self.logInfo.text = translate[lang]!["plsauth"]
             self.logInfo.removeFromSuperview()
             self.logInfo.textColor = .systemBlue
             self.addSubview(self.logInfo)
@@ -184,19 +224,19 @@ class MenuAuth: UIView {
         DispatchQueue.global().async{
             while( self.state != "UnAllowAuth" && self.state != "AllowAuth") {
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Authenticating Please wait."
+                    self.logInfo.text = translate[lang]!["authing0"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Authenticating. Please wait."
+                    self.logInfo.text = translate[lang]!["authing1"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Authenticating.. Please wait."
+                    self.logInfo.text = translate[lang]!["authing2"]
                 }
                 Thread.sleep(forTimeInterval: 0.5)
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Authenticating... Please wait."
+                    self.logInfo.text = translate[lang]!["authing3"]
                 }
             }
             if (self.state == "AllowAuth") {
@@ -204,7 +244,7 @@ class MenuAuth: UIView {
             }
             else {
                 DispatchQueue.main.async{
-                    self.logInfo.text = "Sorry, your password or login are not corrected"
+                    self.logInfo.text = translate[lang]!["incpaslog"]
                 }
             }
             self.state = ""
@@ -215,11 +255,12 @@ class MenuAuth: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     //objc's
+    @objc func presentSettings() {
+        mainView.present(settingsView,animated: true)
+    }
     @objc func pressedCheckAuth(){
         UIView.animate(withDuration: 0.5){
             self.checkAuth.backgroundColor = .systemGreen.withAlphaComponent(0.80)
-            let frameCA = self.checkAuth.frame
-            self.checkAuth.frame = CGRect(x: frameCA.origin.x - 6, y: frameCA.origin.y - 6, width: frameCA.width + 12, height: frameCA.height + 12)
         }
     }
     @objc func checkUserAuth() {
@@ -227,14 +268,21 @@ class MenuAuth: UIView {
 //        mainView.authentication.removeFromSuperview()
         g_server.sendMessage(text: (login.text ?? "") + "/" + (password.text ?? "") + "/")
         //g_server.receiveData()
-        self.login.text = "Onica2"
-        self.password.text = "Onica2"
+        if (UserDefaults.standard.bool(forKey: "isSaved")) {
+            UserDefaults.standard.set(login.text, forKey: "login")
+            UserDefaults.standard.set(password.text, forKey: "password")
+        }
+        else {
+            login.text = ""
+            password.text = ""
+        }
+        
         UIView.animate(withDuration: 0.250){
             self.checkAuth.backgroundColor = .systemGreen.withAlphaComponent(0.375)
-            let frameCA = self.checkAuth.frame
-            self.checkAuth.frame = CGRect(x: frameCA.origin.x + 6, y: frameCA.origin.y + 6, width: frameCA.width - 12, height: frameCA.height - 12)
         }
         setLogInfoCheckAuth()
+        //settingsView.modalPresentationStyle = .fullScreen // Можно убрать, если нужен стиль по умолчанию
+
     }
 }
 

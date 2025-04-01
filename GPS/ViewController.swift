@@ -6,6 +6,7 @@
 //
 import UIKit
 import GoogleMaps
+var lang:String = "ru"
 
 var mainView:ViewController!
 var g_server = Socket()
@@ -22,35 +23,25 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
+        
         DispatchQueue.global().async {
-
             while true {
-
                 if (g_server.isConnected == false) {
+                    DispatchQueue.main.async {
+                        setAuthMenuAndActionTryingConnect()
+                    }
                     g_server.connection.cancel()
                     g_server = Socket()
                     g_server.startConnection()
                     print("perezapysk")
                 }
-                sleep(5)
-
-                if (!g_server.isLeasinig ) {g_server.recieveDataTrackers()
-                print("recieveData")}
+                
 
                 
-                //Thread.sleep(forTimeInterval: 0.5)
+                Thread.sleep(forTimeInterval: 2.5)
 
-                DispatchQueue.main.async {
-                    for map in mainView.listMaps.activeView.maps {
-                        map.updateTrackers()
-                    }
-                    if ((self.toolBarSlide.searchTracker.text ?? "").isEmpty && STServer.filteredTrackers.isEmpty ) {
-                        STServer.filteredTrackers = STServer.trackers
-                    }
-                    
-                    mainView.toolBarSlide.listTrackers.reloadData()
-                    CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
-                }
+                
             }
         }
     }
@@ -61,6 +52,7 @@ class ViewController: UIViewController {
     override func loadView() {
         super.loadView()
         print("Main loadView")
+        lang = UserDefaults.standard.string(forKey: "language") ?? "ru"
         mainView = self
         
         listMaps = ListMaps(superFrame:self.view.frame)
@@ -99,6 +91,7 @@ class ViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         print("Main viewWillAppear")
     }
     
@@ -109,11 +102,13 @@ class ViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
         print("Main viewWillDisppear")
     }
     
     override func viewDidDisappear(_ animated: Bool)
     {
+        
         super.viewDidDisappear(animated)
         print("Main viewDidDisappear")
     }
@@ -136,3 +131,40 @@ class ViewController: UIViewController {
 //        catch {
 //            print("error 0 manual")
 //        }
+//override func viewDidLoad() {
+//    super.viewDidLoad()
+//    
+//    DispatchQueue.global().async {
+//
+//        while true {
+//
+//            if (g_server.isConnected == false) {
+//                DispatchQueue.main.async {
+//                    setAuthMenuAndActionTryingConnect()
+//                }
+//                g_server.connection.cancel()
+//                g_server = Socket()
+//                g_server.startConnection()
+//                print("perezapysk")
+//            }
+//            sleep(1)
+//            if (!g_server.isLeasinig ) {g_server.recieveDataTrackers()
+//            print("recieveData")}
+//
+//            
+//            //Thread.sleep(forTimeInterval: 0.5)
+//
+//            DispatchQueue.main.async {
+//                for map in mainView.listMaps.activeView.maps {
+//                    map.updateTrackers()
+//                }
+//                if ((self.toolBarSlide.searchTracker.text ?? "").isEmpty && STServer.filteredTrackers.isEmpty ) {
+//                    STServer.filteredTrackers = STServer.trackers
+//                }
+//                
+//                mainView.toolBarSlide.listTrackers.reloadData()
+//                CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
+//            }
+//        }
+//    }
+//}

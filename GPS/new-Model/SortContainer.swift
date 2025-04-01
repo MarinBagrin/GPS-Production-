@@ -1,9 +1,9 @@
 import UIKit
 class SortContainer: UIStackView {
-    var sortByGps = SortButton(title: "GPS")
-    var sortByName = SortButton(title: "Name")
-    var sortByOnline = SortButton(title: "Online")
-    var sortByBattey = SortButton(title: "Battery")
+    var sortByGps = SortButton(title: translate[lang]!["gps"]!)
+    var sortByName = SortButton(title: translate[lang]!["name"]!)
+    var sortByOnline = SortButton(title: translate[lang]!["online"]!)
+    var sortByBattey = SortButton(title: translate[lang]!["battery"]!)
     override init(frame: CGRect) {
         super.init(frame:CGRect(x: frame.width * borderTB[2], y: frame.height * 0.120 , width: frame.width * borderTB[3], height: frame.height * 0.05))
         

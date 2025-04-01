@@ -17,7 +17,7 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
     
     init(_ superFrame: CGRect) {
         map = MKMapView(frame:superFrame)
-        initialLocation = CLLocationCoordinate2D(latitude: 49, longitude: 27)
+        initialLocation = CLLocationCoordinate2D(latitude: 47.003670, longitude: 28.907089)
         region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 1907, longitudinalMeters: 1907)
         map.setRegion(region, animated: true)
         super.init()
@@ -36,23 +36,10 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
                 annotationView = TrackerAnnotationView(reuseIdentifier: identifer)
                 (annotationView as! TrackerAnnotationView).setAnnotation(annotationTraker)
             }
-            else {
-                (annotationView as! TrackerAnnotationView).setAnnotation(annotationTraker)
-            }
+            
             
         }
-//        else {
-//            let identifer = "annotationSelf"
-//            let annotationSelf = annotation as! MKPointAnnotation
-//            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
-//            if annotationView == nil {
-//                annotationView = MKAnnotationView(annotation: annotationSelf,reuseIdentifier: identifer)
-//            }
-//            else {
-//                print("2 != nil")
-//                annotationView.annotation = annotationSelf
-//            }
-//        }
+
         annotationView.canShowCallout = false
 
         return annotationView
@@ -72,7 +59,7 @@ class AppleMap:NSObject, UIMap, MKMapViewDelegate {
             else {
                 mapView(map, viewFor: trackers[i])?.isHidden = false
             }
-            
+
         }
     }
     func setCameraOnTracker(trackerShowMap: Tracker) {
@@ -181,7 +168,10 @@ class TrackerAnnotationView: MKAnnotationView {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        blurView.frame = titleLabel.frame
+    }
     @objc func showCallout() {
         self.callout.showHide()
         self.callout.updateData(tracker: (annotation as! AnnotationTraker).tracker)

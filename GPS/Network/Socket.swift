@@ -8,35 +8,49 @@ import Foundation
 import Network
 var timewait = 0
 class Socket {
-    let host = NWEndpoint.Host("192.168.0.44")
-    let port = NWEndpoint.Port(49500)
+    static var user_ip:String!
+    static var user_port:String!
+    
+    
+    
     var isConnected: Bool = false
-    lazy var connection = NWConnection(host: host, port: port, using: .tcp)
     var isLeasinig: Bool = false
-    //
+    let host = NWEndpoint.Host(UserDefaults.standard.string(forKey: "ip") ?? "localhost")
+    let port = NWEndpoint.Port(rawValue: UInt16(UserDefaults.standard.integer(forKey: "port")))
+    
+    lazy var connection = NWConnection(host: host, port: port ?? NWEndpoint.Port(0), using: .tcp)
+    
     init() {
+        
+        print(NWEndpoint.Host(UserDefaults.standard.string(forKey: "ip") ?? "localhost"))
+        print(UInt16(UserDefaults.standard.integer(forKey: "port")))
+
+        
+        
+        
+        
         connection.stateUpdateHandler = { state in
             switch state {
             case .ready:
                 print("Соединение установлено и готово к работе.")
                 self.isConnected = true
+                self.recieveDataTrackers()
             case .waiting(let error):
                 print("Соединение ожидает. Ошибка: \(error.localizedDescription)")
                 self.isConnected = false
             case .failed(let error):
                 print("Соединение не удалось. Ошибка: \(error.localizedDescription)")
                 self.isConnected = false
-
             case .cancelled:
                 print("Соединение было отменено.")
                 self.isConnected = false
             case .preparing:
                 print("Соединение готовится к установке.")
-                DispatchQueue.main.async{
-                    if (mainView.authentication.menuAuth.tryConnectServer.superview == nil) {
-                        mainView.authentication.menuAuth.setActiveTryingConnect()
-                    }
-                }
+//                DispatchQueue.main.async{
+//                    if (mainView.authentication.menuAuth.tryConnectServer.superview == nil) {
+//                        mainView.authentication.menuAuth.setActiveTryingConnect()
+//                    }
+//                }
             default:
                 break
             }
@@ -93,7 +107,7 @@ class Socket {
             self.isLeasinig = false
             if let data = data {
                 let recieveAllow = String(decoding: data, as: UTF8.self)
-                if (recieveAllow.contains("AllowAuth")) {
+                if (recieveAllow.contains("AllowAuth/")) {
                     DispatchQueue.main.async {
                         mainView.authentication.removeFromSuperview()
                         if let startIndex = recieveAllow.index(recieveAllow.startIndex, offsetBy: 10, limitedBy: recieveAllow.endIndex) {
@@ -126,16 +140,31 @@ class Socket {
                         configTracker.battery = Int(recTracker.battery)
                         configTracker.lat = Double(recTracker.latitude) ?? 0
                         configTracker.long = Double(recTracker.longitude) ?? 0
+                        configTracker.connectionNET = .stable
+                        configTracker.connectionGPS = .low
                         configTracker.setAddress()
                     }
                     DispatchQueue.main.async {
                         mainView.listMaps.activeView.checkAndAppendTrackers()
+                    }
+                    DispatchQueue.main.async {
+                        for map in mainView.listMaps.activeView.maps {
+                            map.updateTrackers()
+                        }
+                        if ((mainView.toolBarSlide.searchTracker.text ?? "").isEmpty && STServer.filteredTrackers.isEmpty ) {
+                            STServer.filteredTrackers = STServer.trackers
+                        }
+                        
+                        mainView.toolBarSlide.listTrackers.reloadData()
+                        CalloutView.openCallout?.updateData(tracker:((CalloutView.openCallout?.superview as! TrackerAnnotationView).annotation as! AnnotationTraker).tracker)
                     }
                 }
                 catch {
                     print("Ошибка при десериализации данных: \(error)")
                 }
             }
+            self.recieveDataTrackers()
+
         }
     }
 

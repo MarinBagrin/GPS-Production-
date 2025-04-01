@@ -32,9 +32,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Called when the scene has moved from an inactive state to an active state.
         // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-        if (g_server.isConnected == false) {
-            g_server.restartConnection()
-        }
+//        if (g_server.isConnected == false) {
+//            g_server.restartConnection()
+//        }
         print("SceneDidBecomeActive")
 
     }
@@ -58,13 +58,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Called as the scene transitions from the foreground to the background.
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
-        mainView.view.addSubview(mainView.authentication)
-        g_server.sendRequestUnAuth()
-        mainView.authentication.menuAuth.setActiveTryingConnect()
+        setAuthMenuAndActionTryingConnect()
+
+        
         print("Scene DidEnterBackground")
        
     }
 
 
 }
-
+func setAuthMenuAndActionTryingConnect() {
+    if (mainView.authentication.superview == nil) {
+        g_server.sendRequestUnAuth()
+        mainView.view.addSubview(mainView.authentication)
+    }
+    if (mainView.authentication.menuAuth.tryConnectServer.superview == nil) {
+        mainView.authentication.menuAuth.setActiveTryingConnect()
+    }
+}

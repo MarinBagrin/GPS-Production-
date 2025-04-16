@@ -18,7 +18,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5ED7A25D2D21B00E0058FF91 /* Exceptions for "GPS" folder in "GPS" target */ = {
+		5E6D4A722DA6970400DAD3F2 /* Exceptions for "GPS" folder in "GPS" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -31,7 +31,7 @@
 		5ED7A24D2D21B00B0058FF91 /* GPS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				5ED7A25D2D21B00E0058FF91 /* Exceptions for "GPS" folder in "GPS" target */,
+				5E6D4A722DA6970400DAD3F2 /* Exceptions for "GPS" folder in "GPS" target */,
 			);
 			path = GPS;
 			sourceTree = "<group>";
@@ -240,7 +240,6 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "<string>Мы используем ваше местоположение для улучшения работы приложения.</string>\n";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
@@ -272,7 +271,6 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "<string>Мы используем ваше местоположение для улучшения работы приложения.</string>\n";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;

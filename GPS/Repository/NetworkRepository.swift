@@ -11,7 +11,9 @@ protocol NetworkRepository {
 }
 protocol NetworkRepositoryDataLayer {
     func notifyAboutChanheAddressConnection()
+    var saveCorrectCredentials:((Credentials)->Void)? {get set}
     var getDataForConnect:(()->AddressModel)? {get set}
+    
 
 }
 class NetworkRepositoryImpl{
@@ -26,8 +28,10 @@ class NetworkRepositoryImpl{
     var organisationName = ""
     private var isStarted = false
     var getDataForConnect:(()->AddressModel)?
+    var saveCorrectCredentials:((Credentials)->Void)?
     var host:NWEndpoint.Host? = nil
     var port:NWEndpoint.Port? = nil
+    var credentials:Credentials?
     var integ = 0
 
     lazy var connection:NWConnection? = nil
@@ -69,7 +73,7 @@ class NetworkRepositoryImpl{
                 self.isConnected.value = false
             case .preparing:
                 print("Соединение готовится к установке.")
-                print("kakoy raz", self.integ)
+                print("kakoy raz",self.integ)
             default:
                 break
             }
@@ -109,7 +113,9 @@ class NetworkRepositoryImpl{
             }
         })
     }
-    
+    func sendRequestForArchive() {
+        
+    }
     func recieveDataTrackers() {
         connection?.receive(minimumIncompleteLength: 1, maximumLength: 64000) {  data, _, isComplete, error in
             if (error != nil) {
@@ -120,6 +126,7 @@ class NetworkRepositoryImpl{
             if let data = data, !data.isEmpty {
                 let recieveAllow = String(decoding: data, as: UTF8.self)
                 if (recieveAllow.contains("AllowAuth/")) {
+                    self.saveCorrectCredentials?(self.credentials!)
                     self.stateAuthenticated.value = .yes
                     if let startIndex = recieveAllow.index(recieveAllow.startIndex, offsetBy: 10, limitedBy: recieveAllow.endIndex) {
                         let organisationRecieve = String(recieveAllow[startIndex...])
@@ -165,6 +172,7 @@ class NetworkRepositoryImpl{
 extension NetworkRepositoryImpl:NetworkRepositoryDataLayer {
 
     func notifyAboutChanheAddressConnection() {
+        print("Smena Ip Notify RepNet")
         isConnected.value = false
     }
 }
@@ -180,6 +188,7 @@ extension NetworkRepositoryImpl:NetworkRepository {
                 self.stateAuthenticated.value = .processing
             }
         })
+        credentials = Credentials(login: login, password: password)
     }
 }
     

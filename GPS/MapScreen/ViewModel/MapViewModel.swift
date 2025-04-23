@@ -1,4 +1,5 @@
 import MapKit
+import Combine
 protocol MapViewModelDelegate {
     var trackers:Observable<[Observable<TrackerViewModel>]>{get set}
     var positionCamera:Observable<MKCoordinateRegion?>{get set}
@@ -9,7 +10,7 @@ protocol MapViewModelDelegate {
 
 
 class MapViewModel {
-    var authUseCase:AuthUseCase    
+    var authUseCase:AuthUseCase
     var trackersUseCase:TrackersUseCase
     var connectionServerUseCase:ConnectionServerUseCase
     var trackers = Observable<[Observable<TrackerViewModel>]>([])
@@ -17,16 +18,22 @@ class MapViewModel {
     var textSearchTrackers = Observable<String>("")
     var isConnected = Observable<Bool>(false)
     var isAuthenticated = Observable<stateAuth>(.no)
+    var isSavedCredentails:Bool = false
     var redrawTrackersTable = Observable<Bool>(false)
     var onOpenSettings:(() -> Void)?
+    var onArchive:(() -> Void)?
+    private var cancellabels = Set<AnyCancellable>()
 
     
     
     init(repositories:Repositories) {
-        authUseCase = AuthUseCase(networkRepository: repositories.network )
+        authUseCase = AuthUseCase(repositories: repositories )
         trackersUseCase = TrackersUseCase(networkRepository: repositories.network)
         connectionServerUseCase = ConnectionServerUseCase(networkRepository: repositories.network)
         bind()
+    }
+    func getCredentialsAuth() ->Credentials {
+        return authUseCase.getCredentialsAuth()
     }
     func checkAuthentification(login:String, password:String)
     {
@@ -36,10 +43,14 @@ class MapViewModel {
         onOpenSettings?()
     }
     private func bind() {
-        authUseCase.getObservableStateAuthenticated().bind{[weak self] state in self?.isAuthenticated.value = state}
+        authUseCase.getObservableStateAuthenticated().bind{[weak self] state in
+            self?.isAuthenticated.value = state
+            if(state == .yes && self?.isSavedCredentails ?? false) {
+                self?.authUseCase.saveCredentialsInMemmory()
+            }
+        }
         
         connectionServerUseCase.getObservableIsConnected().bind{[weak self] isConnected in
-            self?.isConnected.value = isConnected
             
             if (!isConnected) {
                 print("view model IsConnected: ", false)
@@ -48,6 +59,8 @@ class MapViewModel {
             }
             else{
                 print("view model IsConnected: ", true)
+                self?.isConnected.value = isConnected
+
             }
         }
         
@@ -60,6 +73,16 @@ class MapViewModel {
                 return observableTrackerVM
             }
         }
+        
+        authUseCase.getPublisherIsSaved()
+            .sink {[weak self] isSavedCredentails in
+                self?.isSavedCredentails = isSavedCredentails
+                print("viewModelISSaved: ", isSavedCredentails)
+                if (isSavedCredentails && self?.isAuthenticated.value == .yes) {
+                    self?.authUseCase.saveCredentialsInMemmory()
+                }
+            }
+            .store(in: &cancellabels)
         
     }
     

@@ -15,7 +15,6 @@ class SettingsViewController:UIViewController {
     var isSaved:UISwitch!
     var closeButton = UIButton()
     var buttonsLang:[UIButton] = []
-    var languageSelect = lang
     private var cancellabels = Set<AnyCancellable>()
 
     
@@ -23,10 +22,12 @@ class SettingsViewController:UIViewController {
         self.coordinator = coordinator
         self.viewModel = SettingsViewModel(settingsRepository: coordinator.repositories.settings)
         super.init(nibName: nil, bundle: nil)
-        self.viewModel?.onRestartFlow = {[weak self] in self?.coordinator?.restartFlow()}
     }
     deinit {
+        print("deinit SettingsViewContoller")
+        viewModel?.restoreSavedSettings()// временная заглушка для закрытия вьюконтроллера свайпоm
         coordinator?.removeFromSuperCoordinator()
+        
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -73,7 +74,14 @@ class SettingsViewController:UIViewController {
         setupUI()
         addContent()
         alert.addAction(UIAlertAction(title: translate[lang]!["yes"]!, style: .default){[weak self] _ in
+            let isNeededRestartFlowFlag = self?.viewModel?.isNeededRestartFlow()
             self?.viewModel?.saveConfigurationSettings()
+            if let isNeededRestartFlow = isNeededRestartFlowFlag, isNeededRestartFlow {
+                self?.coordinator?.restartFlow()
+            }
+            else {
+                self?.coordinator?.popSettingsVC()
+            }
         })
         alert.addAction(UIAlertAction(title: translate[lang]!["no"]!, style: .default){[weak self] _ in
             self?.viewModel?.restoreSavedSettings()
@@ -122,7 +130,7 @@ class SettingsViewController:UIViewController {
 
         
         NSLayoutConstraint.activate([
-            namePage.topAnchor.constraint(equalTo: self.view.topAnchor),
+            namePage.topAnchor.constraint(equalTo: self.view.topAnchor,constant: self.view.frame.height * 0.08),
             namePage.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.10),
             namePage.widthAnchor.constraint(equalTo: self.view.widthAnchor,multiplier: 1),
         ])
@@ -226,7 +234,7 @@ final class CellSettings:UIView {
     var contentStack = UIStackView()
     var listViews:[UIView] = []
     var viewModel:SettingsViewModel?
-    var settingsViewController: SettingsViewController
+    weak var settingsViewController: SettingsViewController?
     init(name:String,viewModel:SettingsViewModel?,settViewController: SettingsViewController) {
         self.viewModel = viewModel
         self.settingsViewController = settViewController
@@ -283,11 +291,11 @@ final class CellSettings:UIView {
         textField.delegate = self
         listViews.append(textField)
         if (name.text == translate[lang]!["enterip"]!) {
-            settingsViewController.ipField = textField
+            settingsViewController?.ipField = textField
             textField.text = UserDefaults.standard.string(forKey: "ip")
         }
          if (name.text == translate[lang]!["enterport"]!) {
-             settingsViewController.portField = textField
+             settingsViewController?.portField = textField
              textField.text = UserDefaults.standard.string(forKey: "port")
         }
         
@@ -304,7 +312,7 @@ final class CellSettings:UIView {
             }
             contentStack.addArrangedSubview(button)
             
-            settingsViewController.buttonsLang.append(button)
+            settingsViewController?.buttonsLang.append(button)
         }
         NSLayoutConstraint.activate([
            //contentStack.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1),
@@ -326,7 +334,7 @@ final class CellSettings:UIView {
 
         ])
         contentStack.alignment = .center
-        settingsViewController.isSaved = switchSaveLogPass
+        settingsViewController?.isSaved = switchSaveLogPass
         switchSaveLogPass.addTarget(self, action: #selector(didToggleSaveCredentialsSwitch), for: .touchUpInside)
         
     }
@@ -335,6 +343,7 @@ final class CellSettings:UIView {
     }
     @objc func didTappedSelectLanguageButton(sender:UIButton) {
         guard let languageSelected = sender.titleLabel?.text else {print("error language selected");return}
+        print(languageSelected)
         viewModel?.setSelectedLanguage(language: buttonsLongLanguageDict[languageSelected]!)
     }
     required init?(coder: NSCoder) {
@@ -359,10 +368,10 @@ extension CellSettings: UITextFieldDelegate {
 //    }
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool
     {
-        if name.text == "Ip" {
+        if name.text == translate[lang]?["enterip"]! {
             viewModel?.updateIpIfValid(range: range, with: string)
         }
-        else if name.text == "Port" {
+        else if name.text == translate[lang]?["enterport"]!  {
             viewModel?.updatePortIfValid(range: range, with: string)
         }
         return false
@@ -373,5 +382,5 @@ enum Language {
 }
 let buttonsLongLanguageDict: [String: Language] = ["🇺🇸 English" : .eng, "🇷🇺 Русский" : .ru, "🇷🇴 Română" : .ro]
 
-let buttonsShortLanguageDict: [Language: String] = [ .eng : "🇺🇸 English" ,.ro : "🇷🇺 Русский" , .ru :"🇷🇴 Română"]
+let buttonsShortLanguageDict: [Language: String] = [ .eng : "🇺🇸 English", .ro : "🇷🇴 Română", .ru : "🇷🇺 Русский"]
 

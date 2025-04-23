@@ -13,6 +13,7 @@ class MapViewController: UIViewController {
     var appleMapView:AppleMapMnagerView!
     var toolBarSlideView:ToolBarSlideView!
     var authenticationView:AuthenticationView!
+    var archiveButton:UIButton!
     var coordinator:MapCoordinator?
     init(coordinator:MapCoordinator) {
         self.coordinator = coordinator
@@ -21,8 +22,11 @@ class MapViewController: UIViewController {
         mapViewModel.onOpenSettings = { [weak self] in
             self?.coordinator?.showSettingVC()
         }
+        
     }
     deinit {
+        print("deinit MapViewController")
+
         coordinator?.removeFromSuperCoordinator()
     }
     required init?(coder: NSCoder) {
@@ -33,11 +37,39 @@ class MapViewController: UIViewController {
         appleMapView = AppleMapMnagerView(self.view.frame,viewModel: mapViewModel)
         toolBarSlideView = ToolBarSlideView(frame: self.view.frame,viewModel: mapViewModel)
         authenticationView = AuthenticationView(frame: self.view.frame,viewModel: mapViewModel)
+        archiveButton = UIButton()
+        
+        archiveButton.addTarget(self, action: #selector(showArchieveVC), for: .touchUpInside)
+
         
         self.view.addSubview(appleMapView.map)
+        self.view.addSubview(archiveButton)
         self.view.addSubview(toolBarSlideView)
         self.view.addSubview(authenticationView)
+        
+        setupUI()
     }
+    @objc func showArchieveVC() {
+        coordinator?.showArchieveVC(viewModel: mapViewModel)
+    }
+        
+        
+    
+private func setupUI() {
+    archiveButton.translatesAutoresizingMaskIntoConstraints = false
+    archiveButton.setImage(UIImage(named: "archive.png"), for: .normal)
+    
+    
+    NSLayoutConstraint.activate([
+        archiveButton.topAnchor.constraint(equalTo: self.view.topAnchor,constant: 80),
+        archiveButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: 8),
+        archiveButton.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.08),
+        archiveButton.widthAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.08),
+        //
+        
+        
+    ])
+}
     override func loadView() {
         super.loadView()
         print("Main loadView")

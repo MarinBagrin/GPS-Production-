@@ -13,7 +13,6 @@ class AppCoordinator:Coordinator {
         childCoordinators = []
         let mapCoordinator = MapCoordinator(navController: navController, parrentCoordinator: self, repositories: repositories)
         childCoordinators.append(mapCoordinator)
-        print(repositories.settings)
         window.rootViewController = navController
         window.makeKeyAndVisible()
         
@@ -21,6 +20,12 @@ class AppCoordinator:Coordinator {
         
     }
     func restart() {
+        print("AppCoordinator.restart() запущен. Flow перезапускается.")
+
+        childCoordinators = []
+        let mapCoordinator = MapCoordinator(navController: navController, parrentCoordinator: self, repositories: repositories)
+        childCoordinators.append(mapCoordinator)        
+        mapCoordinator.start()
         
     }
 }

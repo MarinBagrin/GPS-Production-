@@ -72,10 +72,7 @@ class MenuAuth: UIView {
     lazy var unitateY = frame.height / 10
     lazy var unitateX = frame.width / 10
     
-    lazy var tsb = setingsButton.topAnchor.constraint(equalTo: password.bottomAnchor)
-    lazy var lsb = setingsButton.leadingAnchor.constraint(equalTo: password.leadingAnchor)
-    lazy var wsb = setingsButton.widthAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.225)
-    lazy var hsb = setingsButton.heightAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.225)
+    
     
     init(frame: CGRect, viewModel:MapViewModel) {
         self.viewModel = viewModel
@@ -103,19 +100,23 @@ class MenuAuth: UIView {
         }
         
         viewModel.isAuthenticated.bind{[weak self] stateAuthenticated in
+            guard let self = self else {print("error guard ViewAuth");return}
             switch stateAuthenticated {
             case .yes:
                 break
             case .no:
-                break
+                if !self.viewModel.isSavedCredentails {
+                    login.text = ""
+                    password.text = ""
+                }
             case .wrong:
                 break
                 //pri nt worng
             case .processing:
-                self?.taskCheckingAuth = Task {
-                    await self?.activeStateCheckingAuth()
+                self.taskCheckingAuth = Task {
+                    await self.activeStateCheckingAuth()
                     await MainActor.run {
-                        self?.unActivateStateCheckingAuth()
+                        self.unActivateStateCheckingAuth()
                     }
                 }
             }
@@ -124,22 +125,23 @@ class MenuAuth: UIView {
     
     
     private func setupUI() {
-        self.addSubview(setingsButton)
         self.addSubview(login)
         self.addSubview(password)
         self.addSubview(checkAuth)
         self.addSubview(copyright)
         self.addSubview(tryConnectServer)
         self.addSubview(logInfo)
+        self.addSubview(setingsButton)
+
         
         self.backgroundColor = UIColor.gray.withAlphaComponent(0.25)
         self.layer.cornerRadius = 5
         setingsButton.setImage(resizeImage(image: UIImage(named: "settings-icon.png")!,targetSize: CGSize(width: frame.width ,height: frame.width )), for: .normal)
         
         setingsButton.translatesAutoresizingMaskIntoConstraints = false
-        setingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .allTouchEvents)
+        setingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .touchUpInside)
         
-        NSLayoutConstraint.activate([tsb,lsb,wsb,hsb])
+      
         
         login.frame = CGRect(x: unitateX * 2, y: unitateY * 2, width:unitateX*6 , height: unitateY)
         login.backgroundColor = UIColor.white.withAlphaComponent(0.85)
@@ -153,12 +155,12 @@ class MenuAuth: UIView {
         login.layer.shadowOpacity = 0.3
         login.textColor = .black
         login.font = UIFont.boldSystemFont(ofSize: 16)
-        if (UserDefaults.standard.bool(forKey: "isSaved")) {
-            login.text = UserDefaults.standard.string(forKey: "login") ?? ""
+        if viewModel.isSavedCredentails {
+            login.text = viewModel.getCredentialsAuth().login
         }
         
         login.attributedPlaceholder = NSAttributedString(
-            string: "    Login",
+            string: "Login",
             attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
         )
         var spaceLeft = UIView(frame: CGRect(x: 0, y: 0, width: login.frame.width * 0.05, height: login.frame.height))
@@ -180,8 +182,8 @@ class MenuAuth: UIView {
         spaceLeft = UIView(frame: CGRect(x: 0, y: 0, width: password.frame.width * 0.05, height: password.frame.height))
         password.leftView = spaceLeft
         password.leftViewMode = .always
-        if (UserDefaults.standard.bool(forKey: "isSaved")) {
-            password.text = UserDefaults.standard.string(forKey: "password") ?? ""
+        if viewModel.isSavedCredentails {
+            password.text = viewModel.getCredentialsAuth().password
         }
         password.attributedPlaceholder = NSAttributedString(
             string: "Password",
@@ -198,9 +200,9 @@ class MenuAuth: UIView {
         
         checkAuth.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            checkAuth.topAnchor.constraint(equalTo: password.bottomAnchor, constant:6),
+            checkAuth.topAnchor.constraint(equalTo: password.bottomAnchor, constant:10),
             checkAuth.leadingAnchor.constraint(equalTo: password.leadingAnchor),
-            checkAuth.widthAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.70),
+            checkAuth.widthAnchor.constraint(equalTo: password.widthAnchor),
             //            checkAuth.heightAnchor.constraint(equalTo: password.widthAnchor,multiplier: 0.45)
         ])
         checkAuth.addTarget(self, action: #selector(pressedCheckAuth), for: .touchDown)
@@ -217,12 +219,17 @@ class MenuAuth: UIView {
         logInfo.font = UIFont(name: "SF Pro Display", size: 20)
         logInfo.frame = CGRect(x: frame.width * 0, y: frame.height * 0.05, width: frame.width , height: frame.height * 0.05)
         logInfo.textAlignment = .center
-        
+        NSLayoutConstraint.activate([
+            setingsButton.topAnchor.constraint(equalTo: checkAuth.bottomAnchor,constant: 15),
+            setingsButton.centerXAnchor.constraint(equalTo: checkAuth.centerXAnchor),
+            setingsButton.widthAnchor.constraint(equalTo: checkAuth.widthAnchor,multiplier: 0.5),
+            setingsButton.heightAnchor.constraint(equalTo: checkAuth.widthAnchor,multiplier: 0.5),
+        ])
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        lsb.constant = password.frame.width * 0.75
+        //lsb.constant = password.frame.width * 0.75
         
     }
     

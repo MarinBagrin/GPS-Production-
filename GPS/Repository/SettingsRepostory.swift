@@ -11,20 +11,25 @@ protocol SettingsRepository {
     func setSelectedLanguage(language:Language)
     func saveConfigurationSettings()
     func restoreSavedSettings() 
-    func isChanchedIpOrPort() -> Bool
-    
-    //var networkRepositoryOn:NetworkRepositoryDataLayer
-    
-    
+    func isChangedSettings() ->Bool
+
+}
+protocol SettingsRepositoryAuth {
+    var getCredentials:Credentials {get}
+    var isSavedAuthOn:AnyPublisher<Bool,Never> {get}
+    func saveCredentialsInMemmory()
+
 }
 
 class SettingsRepositoryImpl: SettingsRepository {
-    private var ip = CurrentValueSubject<String,Never>(UserDefaults.standard.string(forKey: "ip") ?? "95.65.72.7")
+    private var ip = CurrentValueSubject<String,Never>(UserDefaults.standard.string(forKey: "ip") ?? "192.168.0.44")
     private var port = CurrentValueSubject<String,Never>(UserDefaults.standard.string(forKey: "port") ?? "49500")
-    private var selectedLanguage = CurrentValueSubject<Language,Never>(buttonsLongLanguageDict[UserDefaults.standard.string(forKey: "language") ?? "🇺🇸 English"]!)
+    private var selectedLanguage = CurrentValueSubject<Language,Never>(
+        buttonsLongLanguageDict[UserDefaults.standard.string(forKey: "language") ?? "🇺🇸 English"]!)
     private var isSavedAuth = CurrentValueSubject<Bool,Never>(UserDefaults.standard.bool(forKey: "isSaved"))
     private var networkRepository:NetworkRepositoryDataLayer
-    
+    private var credentials = Credentials(login: UserDefaults.standard.string(forKey: "login") ?? "",
+                                          password: UserDefaults.standard.string(forKey: "pass") ?? "")
     var ipOn:AnyPublisher<String,Never> { ip.eraseToAnyPublisher()}
     var portOn:AnyPublisher<String,Never> {port.eraseToAnyPublisher()}
     var selectedLanguageOn:AnyPublisher<Language,Never> {selectedLanguage.eraseToAnyPublisher()}
@@ -34,11 +39,21 @@ class SettingsRepositoryImpl: SettingsRepository {
         self.networkRepository = networkRepository
         self.networkRepository.getDataForConnect = {[weak self] in
             return AddressModel(host: self?.ip.value ?? "", port: UInt16(self?.port.value ?? "0") ?? 0)
-            
         }
+        self.networkRepository.saveCorrectCredentials = {[weak self] value in
+            self?.credentials = value
+        }
+        lang = selectedLanguage.value
     }
-    func isChanchedIpOrPort() ->Bool {
-        return UserDefaults.standard.string(forKey: "ip") ?? "nill" != ip.value || UserDefaults.standard.string(forKey: "port") ?? "49500" != port.value
+    
+    
+    func isChangedSettings() ->Bool {
+        let isChangedIpPort = UserDefaults.standard.string(forKey: "ip") ?? "nill" != ip.value || UserDefaults.standard.string(forKey: "port") ?? "49500" != port.value
+        var isChangedLanguage = false
+        if let storageLanguage = buttonsLongLanguageDict[UserDefaults.standard.string(forKey: "language") ?? ""] {
+            isChangedLanguage = storageLanguage != selectedLanguage.value
+        }
+        return isChangedIpPort || isChangedLanguage
     }
     func saveConfigurationSettings() {
         UserDefaults.standard.set(buttonsShortLanguageDict[selectedLanguage.value], forKey: "language")
@@ -79,3 +94,11 @@ class SettingsRepositoryImpl: SettingsRepository {
 
     }
 }
+extension SettingsRepositoryImpl:SettingsRepositoryAuth {
+    var getCredentials:Credentials {return credentials}
+    func saveCredentialsInMemmory() {
+        UserDefaults.standard.set(credentials.login, forKey: "login")
+        UserDefaults.standard.set(credentials.password, forKey: "pass")
+    }
+}
+

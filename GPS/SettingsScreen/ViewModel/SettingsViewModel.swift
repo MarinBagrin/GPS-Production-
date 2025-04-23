@@ -6,7 +6,6 @@ class SettingsViewModel {
     @Published var port = String("")
     @Published var selectedLanguage:Language = .eng
     @Published var isSavedAuth = false
-    var onRestartFlow:(()->Void)?
     private var cancellabels = Set<AnyCancellable>()
     init(settingsRepository:SettingsRepository) {
         self.settingsUseCase = SettingsUseCase(settingsRepository: settingsRepository)
@@ -25,6 +24,7 @@ class SettingsViewModel {
             .store(in: &cancellabels)
         settingsUseCase?.getPublisherSelectedLanguage()
             .sink { [weak self] language in
+                
                 self?.selectedLanguage = language
             }
             .store(in: &cancellabels)
@@ -46,12 +46,11 @@ class SettingsViewModel {
     func updatePortIfValid(range:NSRange, with:String) {
         settingsUseCase?.updatePortIfValid(range: range, with: with)
     }
+    func isNeededRestartFlow() -> Bool {
+        return settingsUseCase?.isChangedSettings() ?? false
+    }
     func saveConfigurationSettings() {
-        let flag = settingsUseCase?.isNeededRestartMainScreen()
         settingsUseCase?.saveConfigurationSettings()
-        if flag ?? false {
-            onRestartFlow?()
-        }
     }
     func restoreSavedSettings() {
         settingsUseCase?.restoreSavedSettings()

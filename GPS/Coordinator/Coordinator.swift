@@ -6,6 +6,7 @@ protocol Coordinator {
     var parrentCoordinator: Coordinator? {get set}
     var repositories:Repositories {get set}
     func start()
+    func restart()
 }
 
 class MapCoordinator:Coordinator {
@@ -20,15 +21,23 @@ class MapCoordinator:Coordinator {
         
     }
     func removeFromSuperCoordinator() {
-        parrentCoordinator?.start()
+        parrentCoordinator?.restart()
     }
     func start() {
         let mapVC = MapViewController(coordinator: self)
         navController.pushViewController(mapVC, animated: false)
     }
-    
+    func restart(){
+        
+    }
+    func showArchieveVC(viewModel:MapViewModel) {
+        let archieveCoordinator = ArchieveCoordinator(navController: navController, parrentCoordinator: self, repositories: repositories)
+        childCoordinators.append(archieveCoordinator)
+        archieveCoordinator.startWithViewModel(viewModel: viewModel)
+        
+    }
     func showSettingVC() {
-        var settingsCoordinator = SettingsCoordinator(navController: navController, parrentCoordinator: self,repositories:repositories)
+        let settingsCoordinator = SettingsCoordinator(navController: navController, parrentCoordinator: self,repositories:repositories)
         childCoordinators.append(settingsCoordinator)
         settingsCoordinator.start()
     }
@@ -55,8 +64,10 @@ class SettingsCoordinator:Coordinator {
         let settingsVC = SettingsViewController(coordinator: self)
         navController.pushViewController(settingsVC, animated: true)
     }
+    func restart(){}
     func restartFlow() {
-        navController.setViewControllers([], animated: true)
+        print("SettingsCoordinator.restart() запущен.")
+        navController.viewControllers.removeAll()
     }
     func popSettingsVC() {
         navController.popViewController(animated: true)

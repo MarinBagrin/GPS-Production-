@@ -9,8 +9,8 @@ class SettingsUseCase {
     func restoreSavedSettings() {
         settingsRepository.restoreSavedSettings()
     }
-    func isNeededRestartMainScreen() -> Bool {
-        return settingsRepository.isChanchedIpOrPort()
+    func isChangedSettings() -> Bool {
+        return settingsRepository.isChangedSettings()
     }
     func saveConfigurationSettings() {
         settingsRepository.saveConfigurationSettings()

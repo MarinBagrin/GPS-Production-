@@ -69,6 +69,7 @@ class MenuAuth: UIView {
     var taskConnection:Task<Void,Never>?
     var taskCheckingAuth:Task<Void,Never>?
     
+    
     lazy var unitateY = frame.height / 10
     lazy var unitateX = frame.width / 10
     
@@ -237,6 +238,7 @@ class MenuAuth: UIView {
         tryConnectServer.isHidden = false
         logInfo.textColor = .white
         while(!viewModel.isConnected.value) {
+            
             await MainActor.run {
                 self.logInfo.text = translate[lang]!["servconat0"]
             }
@@ -288,9 +290,7 @@ class MenuAuth: UIView {
         
         taskCheckingAuth?.cancel()
         
-        print(14444)
         logInfo.text = ""
-        print(11111333)
 
         checkAuth.isEnabled = true
     }

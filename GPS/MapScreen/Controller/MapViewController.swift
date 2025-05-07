@@ -6,14 +6,14 @@
 //
 import UIKit
 import GoogleMaps
-var lang:Language = .eng
+var lang:Language = .ru
 
 class MapViewController: UIViewController {
     var mapViewModel:MapViewModel
     var appleMapView:AppleMapMnagerView!
     var toolBarSlideView:ToolBarSlideView!
     var authenticationView:AuthenticationView!
-    var archiveButton:UIButton!
+    var actionMenu:ActionMenu!
     var coordinator:MapCoordinator?
     init(coordinator:MapCoordinator) {
         self.coordinator = coordinator
@@ -22,7 +22,6 @@ class MapViewController: UIViewController {
         mapViewModel.onOpenSettings = { [weak self] in
             self?.coordinator?.showSettingVC()
         }
-        
     }
     deinit {
         print("deinit MapViewController")
@@ -37,37 +36,34 @@ class MapViewController: UIViewController {
         appleMapView = AppleMapMnagerView(self.view.frame,viewModel: mapViewModel)
         toolBarSlideView = ToolBarSlideView(frame: self.view.frame,viewModel: mapViewModel)
         authenticationView = AuthenticationView(frame: self.view.frame,viewModel: mapViewModel)
-        archiveButton = UIButton()
+        actionMenu = ActionMenu(viewModel: mapViewModel)
         
-        archiveButton.addTarget(self, action: #selector(showArchieveVC), for: .touchUpInside)
+        
 
         
-        self.view.addSubview(appleMapView.map)
-        self.view.addSubview(archiveButton)
-        self.view.addSubview(toolBarSlideView)
-        self.view.addSubview(authenticationView)
+
         
         setupUI()
-    }
-    @objc func showArchieveVC() {
-        coordinator?.showArchieveVC(viewModel: mapViewModel)
-    }
-        
-        
+    }  
     
 private func setupUI() {
-    archiveButton.translatesAutoresizingMaskIntoConstraints = false
-    archiveButton.setImage(UIImage(named: "archive.png"), for: .normal)
+    self.view.addSubview(appleMapView.map)
+    self.view.addSubview(actionMenu)
+    self.view.addSubview(toolBarSlideView)
+    self.view.addSubview(authenticationView)
+
     
+    actionMenu.translatesAutoresizingMaskIntoConstraints = false
     
+    actionMenu.archiveButtonTapped = {[weak self] in
+        guard let self = self else {return}
+        coordinator?.showArchieveVC(viewModel: mapViewModel)
+    }
     NSLayoutConstraint.activate([
-        archiveButton.topAnchor.constraint(equalTo: self.view.topAnchor,constant: 80),
-        archiveButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: 8),
-        archiveButton.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.08),
-        archiveButton.widthAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.08),
-        //
-        
-        
+        actionMenu.topAnchor.constraint(equalTo: self.view.topAnchor,constant: 80),
+        actionMenu.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: 8),
+        actionMenu.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.10),
+        actionMenu.widthAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.05),
     ])
 }
     override func loadView() {

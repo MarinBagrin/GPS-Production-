@@ -200,7 +200,7 @@ class ToolBarSlideView:UIView {
     }
 
     func checkDirectory() -> Int {
-        print(direction[0],direction[1],direction[2])
+        //print(direction[0],direction[1],direction[2])
         if ( direction[0] > 0  && direction[1] > 0 && direction[2] > 0 ) {
             return 1
         }

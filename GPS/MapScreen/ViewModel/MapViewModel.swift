@@ -22,6 +22,8 @@ class MapViewModel {
     var redrawTrackersTable = Observable<Bool>(false)
     var onOpenSettings:(() -> Void)?
     var onArchive:(() -> Void)?
+    @Published var stateShowing:stateShowing = .online
+    @Published var archiveTrackers:[TrackerViewModel] = []
     private var cancellabels = Set<AnyCancellable>()
 
     
@@ -31,6 +33,15 @@ class MapViewModel {
         trackersUseCase = TrackersUseCase(networkRepository: repositories.network)
         connectionServerUseCase = ConnectionServerUseCase(networkRepository: repositories.network)
         bind()
+    }
+    func setOnlineShowing() { //метод для выключения (dismiss ArchiveVC)
+        stateShowing = .online
+        trackersUseCase.sendSignal()
+    }
+    func setArchiveShowing(initial:String, end:String,for pickedName: String) {
+        stateShowing = .archive
+//        trackers.value = []
+        trackersUseCase.downloadArchiveTrackers(initial:initial,end:end, for: pickedName )
     }
     func getCredentialsAuth() ->Credentials {
         return authUseCase.getCredentialsAuth()
@@ -65,6 +76,9 @@ class MapViewModel {
         }
         
         trackersUseCase.getObservableTrackers().bind{[weak self] trackers in
+            if self?.stateShowing == .archive {
+                return
+            }
             self?.trackers.value = trackers.map{ trackerModel in
                 let observableTrackerVM = Observable<TrackerViewModel>(TrackerViewModel(trackerModel.value))
                 trackerModel.bind{[weak observableTrackerVM] tracker in
@@ -74,10 +88,24 @@ class MapViewModel {
             }
         }
         
+        trackersUseCase.getPublisherArchive()
+            .sink {[weak self] archive in
+                if self?.stateShowing == .archive {
+                    print("Основной массив с трекерами Онлайн опустошается!")
+                    self?.trackers.value = []
+                    
+                }
+                print("ViewModel archiveTrackers filling")
+                self?.archiveTrackers = archive.map{tracker in
+                    return TrackerViewModel(tracker)
+                }
+            }
+            .store(in: &cancellabels)
+        
         authUseCase.getPublisherIsSaved()
             .sink {[weak self] isSavedCredentails in
                 self?.isSavedCredentails = isSavedCredentails
-                print("viewModelISSaved: ", isSavedCredentails)
+                print("viewModelIsSaved: ", isSavedCredentails)
                 if (isSavedCredentails && self?.isAuthenticated.value == .yes) {
                     self?.authUseCase.saveCredentialsInMemmory()
                 }
@@ -124,6 +152,7 @@ class TrackerViewModel {
     var battery: Int
     var time: String
     var address: String
+    var speed: Int
     var connectionGPS:Conection
     var connectionNET:Conection
     var neededHiden:Bool = false
@@ -134,7 +163,8 @@ class TrackerViewModel {
         id = trackerModel.id
         battery = trackerModel.battery
         time = trackerModel.time
-        address = trackerModel.address ?? ""
+        speed = trackerModel.speed ?? 0
+        address = /*trackerModel.address ??*/ ""
         connectionGPS = trackerModel.connectionGPS
         connectionNET = trackerModel.connectionNET
     }
@@ -145,6 +175,7 @@ class TrackerViewModel {
         //many
         return self
     }
+    //static func == (lhs:TrackerViewModel,rhs:TrackerViewModel)
     
 }
 
@@ -197,4 +228,7 @@ extension MapViewModel:MapViewModelDelegate {
 }
 enum stateAuth {
     case yes,no,wrong,processing
+}
+enum stateShowing {
+    case online, archive
 }

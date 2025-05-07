@@ -17,6 +17,7 @@ class TrackerModel {
     var id: Int!
     var battery: Int!
     var time: String!
+    var speed: Int!
     var address: String!
     var connectionGPS:Conection
     var connectionNET:Conection

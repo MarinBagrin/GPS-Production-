@@ -36,7 +36,7 @@ let translate: [Language: [String: String]] = [
             "gps": "GPS",
             "online": "Online"
         ],
-    .ro: [
+    .ru: [
             "login": "Войти",
             "plsauth": "Пожалуйста, авторизуйтесь.",
             "authing0": "Авторизация, подождите",
@@ -66,7 +66,7 @@ let translate: [Language: [String: String]] = [
             "gps": "GPS",
             "online": "Онлайн"
         ],
-    .ru: [
+    .ro: [
             "login": "Autentificare",
             "plsauth": "Vă rugăm să vă autentificați",
             "authing0": "Autentificare, așteptați",

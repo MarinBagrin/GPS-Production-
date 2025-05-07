@@ -94,6 +94,7 @@ class SettingsViewController:UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action:#selector(dismissKeyboard))
         self.view.addGestureRecognizer(tapGesture)
         bindViewModel()
+        setupCustomBackButton() 
     }
     private func setupCustomBackButton() {
             let backButton = UIBarButtonItem(title: "Назад", style: .plain, target: self, action: #selector(presentAlert))
@@ -195,6 +196,7 @@ class SettingsViewController:UIViewController {
         view.endEditing(true)
     }
      @objc func presentAlert() {
+         print("present alert in SettingsController")
          present(alert,animated: true)
     }
     

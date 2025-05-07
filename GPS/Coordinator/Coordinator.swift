@@ -69,6 +69,7 @@ class SettingsCoordinator:Coordinator {
         print("SettingsCoordinator.restart() запущен.")
         navController.viewControllers.removeAll()
     }
+    
     func popSettingsVC() {
         navController.popViewController(animated: true)
     }

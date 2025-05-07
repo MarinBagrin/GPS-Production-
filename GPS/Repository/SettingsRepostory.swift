@@ -43,6 +43,7 @@ class SettingsRepositoryImpl: SettingsRepository {
         self.networkRepository.saveCorrectCredentials = {[weak self] value in
             self?.credentials = value
         }
+        print(selectedLanguage.value)
         lang = selectedLanguage.value
     }
     
@@ -56,6 +57,7 @@ class SettingsRepositoryImpl: SettingsRepository {
         return isChangedIpPort || isChangedLanguage
     }
     func saveConfigurationSettings() {
+        print("save language in storage memprry,",buttonsShortLanguageDict[selectedLanguage.value])
         UserDefaults.standard.set(buttonsShortLanguageDict[selectedLanguage.value], forKey: "language")
         UserDefaults.standard.set(isSavedAuth.value, forKey: "isSaved")
         UserDefaults.standard.set(ip.value, forKey: "ip")

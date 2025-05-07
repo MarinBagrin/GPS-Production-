@@ -10,6 +10,8 @@ class ArchieveCoordinator:Coordinator {
     
     var repositories: Repositories
     
+    private var archiveVC:ArchiveViewController?
+
     
     init(navController:UINavigationController, parrentCoordinator:Coordinator, repositories:Repositories) {
         self.navController = navController
@@ -21,11 +23,15 @@ class ArchieveCoordinator:Coordinator {
         
     }
     func startWithViewModel(viewModel:MapViewModel) {
-        var archiveVC = ArchiveViewController(viewModel,coordinator: self)
-        archiveVC.modalPresentationStyle = .overCurrentContext
-        navController.present(archiveVC, animated: true)
+        archiveVC = ArchiveViewController(viewModel,coordinator: self)
+        archiveVC?.coordinator = self
+        archiveVC?.modalPresentationStyle = .overCurrentContext
+        navController.present(archiveVC!, animated: true)
     }
-    
+    func closeArchiveVC() {
+        archiveVC?.dismiss(animated: true)
+        
+    }
     func removeFromParrentCoordinator() {
         for i in 0..<(parrentCoordinator?.childCoordinators.count ?? 0) {
             if(parrentCoordinator?.childCoordinators[i] is ArchieveCoordinator) {

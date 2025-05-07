@@ -1,11 +1,15 @@
 import UIKit
 
 class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDataSource {
+    var mainStack:UIStackView!
+    var initialDatePicker:UIDatePicker!
+    var endDatePicker:UIDatePicker!
+
+    
+    
     var selectionLabel = UILabel()
     var initialLabel = UILabel()
-    var initialDatePicker = UIDatePicker()
     var endLabel = UILabel()
-    var endDatePicker =  UIDatePicker()
     var drawRouteButton = UIButton()
     var containerView = UIView()
     var initialContainer = UIView()
@@ -14,6 +18,7 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
     var trackContainer = UIView()
     var blurEffect = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
     var viewModel: MapViewModel
+    private var pickedTrackerName:String?
     var coordinator:ArchieveCoordinator?
     init(_ viewModel:MapViewModel,coordinator:ArchieveCoordinator) {
         self.viewModel = viewModel
@@ -21,7 +26,9 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         super.init(nibName: nil, bundle: nil)
         
     }
-    
+    deinit {
+        coordinator?.removeFromParrentCoordinator()
+    }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -37,129 +44,110 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         }
     }
     private func setupUI() {
-        self.view.addSubview(blurEffect)
-        self.view.addSubview(containerView)
-        containerView.addSubview(selectionLabel)
-        containerView.addSubview(trackContainer)
-        containerView.addSubview(trackPicker)
-        containerView.addSubview(initialLabel)
-        containerView.addSubview(initialContainer)
-        containerView.addSubview(endContainer)
-        containerView.addSubview(initialDatePicker)
-        containerView.addSubview(endLabel)
-        containerView.addSubview(endDatePicker)
-        containerView.addSubview(drawRouteButton)
+        func getStackDatePicker(with name:String) ->UIStackView{
+            var title = UILabel()
+            title.text = name
+            title.translatesAutoresizingMaskIntoConstraints = false
+            
+            var date = UIDatePicker()
+            date.datePickerMode = .dateAndTime
+            date.preferredDatePickerStyle = .compact
+            if (name == "Initial date") {
+                self.initialDatePicker = date
+            }
+            else if (name == "End date") {
+                self.endDatePicker = date
+            }
+            date.translatesAutoresizingMaskIntoConstraints = false
+            var dateStack = UIStackView(arrangedSubviews: [title,date])
+            dateStack.distribution = .equalSpacing
+            dateStack.spacing = 5
+            title.textAlignment = .center
+            dateStack.axis = .horizontal
+            //dateStack.distribution =
+            //date.contentHorizontalAlignment = .center
+            //dateStack.spacing = 1
+            dateStack.translatesAutoresizingMaskIntoConstraints = false
+            return dateStack
+        }
+        func getSeparator() -> UIView {
+        var separator = UIView()
+            separator.backgroundColor = .separator
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                separator.heightAnchor.constraint(equalToConstant: 1)
+            ])
+            return separator
+        }
+        var title = UILabel()
+        // пусть label «любит» свой контент сильнее, чем растягиваться
+        //title.setContentHuggingPriority(.required, for: .vertical)
+
+        // и пусть он «цепляется» за свой размер сильнее, чем сжиматься
+        //title.setContentCompressionResistancePriority(.required, for: .vertical)
+        title.text = "Choice route"
+        title.font = .systemFont(ofSize: 24)
+        title.textAlignment = .center
+        title.translatesAutoresizingMaskIntoConstraints = false
+        var closeButton = UIButton(type: .close)
+        var routeButton = UIButton(type: .system)
+        closeButton.setTitle("Close", for: .normal)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        closeButton.addTarget(self, action: #selector(showRouteButtonTapped), for: .touchUpInside)
+        routeButton.setTitle("Show route", for: .normal)
+        routeButton.translatesAutoresizingMaskIntoConstraints = false
         
         
         
-        selectionLabel.translatesAutoresizingMaskIntoConstraints = false
-        trackContainer.translatesAutoresizingMaskIntoConstraints = false
-        trackPicker.translatesAutoresizingMaskIntoConstraints = false
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        initialLabel.translatesAutoresizingMaskIntoConstraints = false
-        endLabel.translatesAutoresizingMaskIntoConstraints = false
-        endDatePicker.translatesAutoresizingMaskIntoConstraints = false
-        initialContainer.translatesAutoresizingMaskIntoConstraints = false
-        endContainer.translatesAutoresizingMaskIntoConstraints = false
-        initialDatePicker.translatesAutoresizingMaskIntoConstraints = false
-        drawRouteButton.translatesAutoresizingMaskIntoConstraints = false
-        
+        routeButton.addTarget(self, action: #selector(showRouteButtonTapped), for: .touchUpInside)
+        let buttonStack = UIStackView(arrangedSubviews: [closeButton,routeButton])
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        buttonStack.axis = .horizontal
         trackPicker.delegate = self
         trackPicker.dataSource = self
-        
-        selectionLabel.text = "Select the tracker:"
-        initialLabel.text = "Initial date:"
-        endLabel.text = "Final date:"
-        drawRouteButton.setTitle("Show rute", for: .normal)
-        
-        selectionLabel.font = UIFont.systemFont(ofSize: 24)
-        initialLabel.font = UIFont.systemFont(ofSize: 24)
-        endLabel.font = UIFont.systemFont(ofSize: 24)
-        
-        initialLabel.textAlignment = .left
-        endLabel.textAlignment = .left
-        
-        initialDatePicker.datePickerMode = .dateAndTime
-        endDatePicker.datePickerMode = .dateAndTime
-        
-        initialDatePicker.preferredDatePickerStyle = .wheels
-        endDatePicker.preferredDatePickerStyle = .wheels
-        
-        
-        
-        
-        containerView.backgroundColor = .black .withAlphaComponent(0.35)
-        trackContainer.backgroundColor = .black .withAlphaComponent(0.35)
-        initialContainer.backgroundColor = .black .withAlphaComponent(0.35)
-        endContainer.backgroundColor = .black .withAlphaComponent(0.35)
-        drawRouteButton.backgroundColor = .black .withAlphaComponent(0.5)
-        
-        drawRouteButton.layer.cornerRadius = 5
-        trackContainer.layer.cornerRadius = 10
-        containerView.layer.cornerRadius = 10
-        endContainer.layer.cornerRadius = 10
-        trackPicker.layer.cornerRadius = 10
-        initialContainer.layer.cornerRadius = 10
-        
-        blurEffect.frame = self.view.frame
-        blurEffect.alpha = 0.99
-        let sizeContainer = CGSize(width: self.view.frame.width * 0.95, height: self.view.frame.height * 0.60)
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: self.view.topAnchor,constant: self.view.frame.height * 0.1),
-            containerView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: self.view.frame.width * 0.025),
-            containerView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor,constant: -(self.view.frame.width * 0.025)),
-            containerView.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.60),
-            
-            selectionLabel.bottomAnchor.constraint(equalTo: trackPicker.topAnchor),
-            selectionLabel.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            selectionLabel.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            
-            trackPicker.topAnchor.constraint(equalTo: containerView.topAnchor, constant: sizeContainer.height * 0.075),
-            trackPicker.bottomAnchor.constraint(equalTo: initialDatePicker.topAnchor, constant: sizeContainer.height * -0.1),
-            trackPicker.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            trackPicker.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            
-            trackContainer.topAnchor.constraint(equalTo: trackPicker.topAnchor),
-            trackContainer.leadingAnchor.constraint(equalTo: trackPicker.leadingAnchor),
-            trackContainer.trailingAnchor.constraint(equalTo: trackPicker.trailingAnchor),
-            trackContainer.bottomAnchor.constraint(equalTo: trackPicker.bottomAnchor),
-            
-            initialLabel.bottomAnchor.constraint(equalTo: initialDatePicker.topAnchor),
-            initialLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor,constant: sizeContainer.width * 0.10),
-            initialLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor,constant: sizeContainer.width * -0.10),
-            
-            
-            initialDatePicker.bottomAnchor.constraint(equalTo: endDatePicker.topAnchor,constant: sizeContainer.height * -0.1),
-            initialDatePicker.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            initialDatePicker.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            initialDatePicker.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.2),
-            
-            endLabel.bottomAnchor.constraint(equalTo: endDatePicker.topAnchor),
-            endLabel.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            endLabel.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            
-            endDatePicker.topAnchor.constraint(equalTo: endLabel.bottomAnchor),
-            endDatePicker.leadingAnchor.constraint(equalTo: endLabel.leadingAnchor),
-            endDatePicker.trailingAnchor.constraint(equalTo: endLabel.trailingAnchor),
-            endDatePicker.heightAnchor.constraint(equalTo: containerView.heightAnchor,multiplier: 0.2),
-            
-            
-            
-            drawRouteButton.topAnchor.constraint(equalTo: endDatePicker.bottomAnchor,constant: sizeContainer.height * 0.05),
-            drawRouteButton.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            drawRouteButton.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            drawRouteButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor,constant: sizeContainer.height * -0.05),
-            
-            initialContainer.topAnchor.constraint(equalTo: initialLabel.bottomAnchor),
-            initialContainer.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            initialContainer.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            initialContainer.heightAnchor.constraint(equalTo: initialDatePicker.heightAnchor),
-            
-            endContainer.topAnchor.constraint(equalTo: endLabel.bottomAnchor),
-            endContainer.leadingAnchor.constraint(equalTo: initialLabel.leadingAnchor),
-            endContainer.trailingAnchor.constraint(equalTo: initialLabel.trailingAnchor),
-            endContainer.heightAnchor.constraint(equalTo: endDatePicker.heightAnchor),
+        trackPicker.translatesAutoresizingMaskIntoConstraints = false
+        mainStack = UIStackView(arrangedSubviews: [
+            title,
+            trackPicker,
+            getStackDatePicker(with: "Initial date"),
+            getSeparator(),
+            getStackDatePicker(with: "End date"),
+            getSeparator(),
+            buttonStack,
         ])
+        
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        mainStack.axis = .vertical
+        mainStack.backgroundColor = .black
+        //mainStack.alignment = .center
+        mainStack.layer.cornerRadius = 8
+        
+        mainStack.distribution = .fill
+        self.view.addSubview(mainStack)
+        
+        NSLayoutConstraint.activate([
+            title.heightAnchor.constraint(equalToConstant: 100),
+            mainStack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            mainStack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            mainStack.heightAnchor.constraint(equalTo: self.view.heightAnchor, multiplier: 0.4),
+            mainStack.widthAnchor.constraint(equalTo: self.view.heightAnchor, multiplier: 0.4)
+        ])
+    }
+    
+    @objc func showRouteButtonTapped() {
+        let selectInitialDate = initialDatePicker.date
+        let selectEndDate = endDatePicker.date
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        
+        let strInitialDate = formatter.string(from: selectInitialDate)
+        let strEndDate = formatter.string(from: selectEndDate)
+        print(strInitialDate, strEndDate)
+        guard let pickedName = pickedTrackerName else {print("archive error picked name");return }
+        viewModel.setArchiveShowing(initial:strInitialDate, end:strEndDate, for:pickedName)
+        print("dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss")
+        coordinator?.closeArchiveVC()
     }
     // MARK: - UIPickerViewDataSource
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
@@ -177,8 +165,130 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if (!(viewModel.trackers.value.isEmpty)) {
+            pickedTrackerName = viewModel.trackers.value[row].value.name
             print("Выбрано: \(viewModel.trackers.value[row].value.name)")
         }
     }
 }
 
+//self.view.addSubview(blurEffect)
+//        self.view.addSubview(containerView)
+//        containerView.addSubview(selectionLabel)
+//        containerView.addSubview(trackContainer)
+//        trackContainer.addSubview(trackPicker)
+//        containerView.addSubview(initialLabel)
+//        containerView.addSubview(initialContainer)
+//        initialContainer.addSubview(initialDatePicker)
+//        containerView.addSubview(endLabel)
+//        containerView.addSubview(endContainer)
+//        endContainer.addSubview(endDatePicker)
+//        containerView.addSubview(drawRouteButton)
+//
+//        selectionLabel.translatesAutoresizingMaskIntoConstraints = false
+//        trackContainer.translatesAutoresizingMaskIntoConstraints = false
+//        trackPicker.translatesAutoresizingMaskIntoConstraints = false
+//        containerView.translatesAutoresizingMaskIntoConstraints = false
+//        initialLabel.translatesAutoresizingMaskIntoConstraints = false
+//        endLabel.translatesAutoresizingMaskIntoConstraints = false
+//        endDatePicker.translatesAutoresizingMaskIntoConstraints = false
+//        initialContainer.translatesAutoresizingMaskIntoConstraints = false
+//        endContainer.translatesAutoresizingMaskIntoConstraints = false
+//        initialDatePicker.translatesAutoresizingMaskIntoConstraints = false
+//        drawRouteButton.translatesAutoresizingMaskIntoConstraints = false
+//
+//        trackPicker.delegate = self
+//        trackPicker.dataSource = self
+//
+//        selectionLabel.text = "Select the tracker:"
+//        initialLabel.text = "Initial date:"
+//        endLabel.text = "Final date:"
+//        drawRouteButton.setTitle("Show rute", for: .normal)
+//
+//        selectionLabel.font = UIFont.systemFont(ofSize: 24)
+//        initialLabel.font = UIFont.systemFont(ofSize: 24)
+//        endLabel.font = UIFont.systemFont(ofSize: 24)
+//
+//        initialLabel.textAlignment = .left
+//        endLabel.textAlignment = .left
+//
+//        initialDatePicker.datePickerMode = .dateAndTime
+//        endDatePicker.datePickerMode = .dateAndTime
+//
+//        initialDatePicker.preferredDatePickerStyle = .compact
+//        endDatePicker.preferredDatePickerStyle = .compact
+//
+//
+//
+//
+//        containerView.backgroundColor = .systemGray6
+//        trackContainer.backgroundColor = .black .withAlphaComponent(0.5)
+//        initialContainer.backgroundColor = .black .withAlphaComponent(0.5)
+//        endContainer.backgroundColor = .black .withAlphaComponent(0.5)
+//        drawRouteButton.backgroundColor = .black.withAlphaComponent(0.5)
+//
+//        drawRouteButton.layer.cornerRadius = 5
+//        trackContainer.layer.cornerRadius = 10
+//        containerView.layer.cornerRadius = 10
+//        endContainer.layer.cornerRadius = 10
+//        trackPicker.layer.cornerRadius = 10
+//        initialContainer.layer.cornerRadius = 10
+//
+//        blurEffect.frame = self.view.frame
+//        blurEffect.alpha = 0.99
+//
+//        drawRouteButton.addTarget(self, action: #selector(showRouteButtonTapped), for: .touchUpInside)
+//
+//        let sizeContainer = CGSize(width: self.view.frame.width * 0.95, height: self.view.frame.height * 0.60)
+//        NSLayoutConstraint.activate([
+//            containerView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
+//            containerView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: self.view.frame.width * 0.025),
+//            containerView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor,constant: -(self.view.frame.width * 0.025)),
+//            containerView.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.50),
+//
+//
+//            selectionLabel.topAnchor.constraint(equalTo: containerView.topAnchor),
+//            selectionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor,constant: sizeContainer.width * 0.10),
+//            selectionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor,constant: sizeContainer.width * -0.10),
+//
+//            trackContainer.topAnchor.constraint(equalTo: selectionLabel.bottomAnchor),
+//            trackContainer.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            trackContainer.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            trackContainer.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.1),
+//
+//            trackPicker.topAnchor.constraint(equalTo: trackContainer.topAnchor),
+//            trackPicker.leadingAnchor.constraint(equalTo: trackContainer.leadingAnchor),
+//            trackPicker.trailingAnchor.constraint(equalTo: trackContainer.trailingAnchor),
+//            trackPicker.bottomAnchor.constraint(equalTo: trackContainer.bottomAnchor),
+//
+//            initialLabel.topAnchor.constraint(equalTo: trackContainer.bottomAnchor,constant: 8),
+//            initialLabel.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            initialLabel.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//
+//            initialContainer.topAnchor.constraint(equalTo: initialLabel.bottomAnchor),
+//            initialContainer.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            initialContainer.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            initialContainer.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.1),
+//
+//            initialDatePicker.topAnchor.constraint(equalTo: initialContainer.topAnchor),
+//            initialDatePicker.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            initialDatePicker.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            initialDatePicker.heightAnchor.constraint(equalTo: initialContainer.heightAnchor),
+//
+//            endLabel.topAnchor.constraint(equalTo: initialContainer.bottomAnchor,constant: 8),
+//            endLabel.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            endLabel.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//
+//            endContainer.topAnchor.constraint(equalTo: endLabel.bottomAnchor),
+//            endContainer.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            endContainer.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            endContainer.heightAnchor.constraint(equalTo: containerView.heightAnchor,multiplier: 0.1),
+//
+//            endDatePicker.topAnchor.constraint(equalTo: endContainer.topAnchor),
+//            endDatePicker.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            endDatePicker.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            endDatePicker.heightAnchor.constraint(equalTo: endContainer.heightAnchor),
+//
+//            drawRouteButton.leadingAnchor.constraint(equalTo: selectionLabel.leadingAnchor),
+//            drawRouteButton.trailingAnchor.constraint(equalTo: selectionLabel.trailingAnchor),
+//            drawRouteButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor,constant: sizeContainer.height * -0.05),
+//        ])

@@ -243,6 +243,7 @@ extension NetworkRepositoryImpl:NetworkRepository {
         return recTrackersArchive.eraseToAnyPublisher()
     }
     func sendRequestForArchive(initial:String,end:String, for pickedName:String) {
+        
         let text = "requestArchive/\(pickedName)/\(initial)/\(end)/"
         let message = text.data(using: .utf8)!
         connection?.send(content: message, completion: .contentProcessed { error in
@@ -312,6 +313,7 @@ extension NetworkRepositoryImpl:NetworkRepository {
     }
     func pushSignal() {
         recivedTrackers.value = recivedTrackers.value
+        recTrackersArchive.value.removeAll()
     }
 
 }

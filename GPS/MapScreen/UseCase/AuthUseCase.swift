@@ -22,4 +22,10 @@ class AuthUseCase {
     func getPublisherIsSaved() -> AnyPublisher<Bool,Never> {
         return settingsRepository.isSavedAuthOn
     }
+    func getShowingRouteFlag() -> AnyPublisher<Bool,Never> {
+        return settingsRepository.isShowingRouteOn
+    }
+    func toogleShowingRouteFlag() {
+        settingsRepository.toogleShowingRouteFlag()
+    }
 }

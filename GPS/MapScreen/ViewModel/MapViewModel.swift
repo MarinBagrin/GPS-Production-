@@ -40,7 +40,7 @@ class MapViewModel {
     }
     func setArchiveShowing(initial:String, end:String,for pickedName: String) {
         stateShowing = .archive
-//        trackers.value = []
+        trackers.value = trackers.value
         trackersUseCase.downloadArchiveTrackers(initial:initial,end:end, for: pickedName )
     }
     func getCredentialsAuth() ->Credentials {
@@ -53,6 +53,13 @@ class MapViewModel {
     func settingsButtonTapped() {
         onOpenSettings?()
     }
+    func getShowingRouteFlag() -> AnyPublisher<Bool,Never> {
+        return authUseCase.getShowingRouteFlag()
+    }
+    func toogleShowingRouteFlag() {
+        authUseCase.toogleShowingRouteFlag()
+    }
+
     private func bind() {
         authUseCase.getObservableStateAuthenticated().bind{[weak self] state in
             self?.isAuthenticated.value = state
@@ -92,7 +99,7 @@ class MapViewModel {
             .sink {[weak self] archive in
                 if self?.stateShowing == .archive {
                     print("Основной массив с трекерами Онлайн опустошается!")
-                    self?.trackers.value = []
+                    
                     
                 }
                 print("ViewModel archiveTrackers filling")
@@ -157,7 +164,7 @@ class TrackerViewModel {
     var connectionNET:Conection
     var neededHiden:Bool = false
     init(_ trackerModel:TrackerModel) {
-        lat = trackerModel.lat
+        lat = trackerModel.lat ?? 0
         long = trackerModel.long
         name = trackerModel.name
         id = trackerModel.id

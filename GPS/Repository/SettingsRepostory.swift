@@ -17,7 +17,10 @@ protocol SettingsRepository {
 protocol SettingsRepositoryAuth {
     var getCredentials:Credentials {get}
     var isSavedAuthOn:AnyPublisher<Bool,Never> {get}
+    var isShowingRouteOn:AnyPublisher<Bool,Never> {get}
     func saveCredentialsInMemmory()
+    func toogleShowingRouteFlag()
+
 
 }
 
@@ -30,10 +33,13 @@ class SettingsRepositoryImpl: SettingsRepository {
     private var networkRepository:NetworkRepositoryDataLayer
     private var credentials = Credentials(login: UserDefaults.standard.string(forKey: "login") ?? "",
                                           password: UserDefaults.standard.string(forKey: "pass") ?? "")
+    private var isShowingRoute = CurrentValueSubject<Bool,Never>(false)
     var ipOn:AnyPublisher<String,Never> { ip.eraseToAnyPublisher()}
     var portOn:AnyPublisher<String,Never> {port.eraseToAnyPublisher()}
     var selectedLanguageOn:AnyPublisher<Language,Never> {selectedLanguage.eraseToAnyPublisher()}
     var isSavedAuthOn:AnyPublisher<Bool,Never> {isSavedAuth.eraseToAnyPublisher()}
+   
+
     
     init(networkRepository:NetworkRepositoryDataLayer) {
         self.networkRepository = networkRepository
@@ -98,6 +104,12 @@ class SettingsRepositoryImpl: SettingsRepository {
 }
 extension SettingsRepositoryImpl:SettingsRepositoryAuth {
     var getCredentials:Credentials {return credentials}
+    var isShowingRouteOn:AnyPublisher<Bool,Never> {
+        return isShowingRoute.eraseToAnyPublisher()
+    }
+    func toogleShowingRouteFlag() {
+        isShowingRoute.value.toggle()
+    }
     func saveCredentialsInMemmory() {
         UserDefaults.standard.set(credentials.login, forKey: "login")
         UserDefaults.standard.set(credentials.password, forKey: "pass")

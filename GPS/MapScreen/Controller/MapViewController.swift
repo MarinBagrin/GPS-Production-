@@ -14,6 +14,7 @@ class MapViewController: UIViewController {
     var toolBarSlideView:ToolBarSlideView!
     var authenticationView:AuthenticationView!
     var actionMenu:ActionMenu!
+    //var actionMenu:ActionMenu!
     var coordinator:MapCoordinator?
     init(coordinator:MapCoordinator) {
         self.coordinator = coordinator
@@ -37,14 +38,10 @@ class MapViewController: UIViewController {
         toolBarSlideView = ToolBarSlideView(frame: self.view.frame,viewModel: mapViewModel)
         authenticationView = AuthenticationView(frame: self.view.frame,viewModel: mapViewModel)
         actionMenu = ActionMenu(viewModel: mapViewModel)
-        
-        
-
-        
-
-        
         setupUI()
-    }  
+        
+        actionMenu.tappedArchiveButton = { self.coordinator?.showArchieveVC(viewModel: self.mapViewModel)}
+    }
     
 private func setupUI() {
     self.view.addSubview(appleMapView.map)
@@ -54,17 +51,13 @@ private func setupUI() {
 
     
     actionMenu.translatesAutoresizingMaskIntoConstraints = false
-    
-    actionMenu.archiveButtonTapped = {[weak self] in
-        guard let self = self else {return}
-        coordinator?.showArchieveVC(viewModel: mapViewModel)
-    }
+
     NSLayoutConstraint.activate([
-        actionMenu.topAnchor.constraint(equalTo: self.view.topAnchor,constant: 80),
-        actionMenu.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: 8),
-        actionMenu.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.10),
-        actionMenu.widthAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.05),
+        actionMenu.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+        actionMenu.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 56),
     ])
+
+
 }
     override func loadView() {
         super.loadView()

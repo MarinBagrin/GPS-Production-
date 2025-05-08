@@ -1,52 +1,68 @@
 import UIKit
-class ActionMenu:UIVisualEffectView {
-    
-    var viewModel:MapViewModel?
-    var stackActionMenu = UIStackView()
-    var archiveButton = UIButton()
-    var swithOnSelfLocationButton = UIButton()
-    var archiveButtonTapped:(()->Void)?
-    required init(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+
+class ActionMenu: UIView {
+
+    let stackView = UIStackView()
+    let archiveButton = UIButton()
+    let locationButton = UIButton()
+    var viewModel:MapViewModel
+    var tappedArchiveButton:(()->Void)?
     init(viewModel:MapViewModel) {
         self.viewModel = viewModel
-        super.init(effect: UIBlurEffect(style: .dark))
-        setupUI()
+
+        super.init(frame: .zero)
+        setupView()
     }
-    private func setupUI() {
-        
-        self.contentView.addSubview(stackActionMenu)
-        
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupView() {
+        self.backgroundColor = UIColor.black.withAlphaComponent(0.35)
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+        blur.translatesAutoresizingMaskIntoConstraints = false
         self.layer.cornerRadius = 8
-        
         self.clipsToBounds = true
+        stackView.axis = .vertical
+        stackView.spacing = 10
+        stackView.translatesAutoresizingMaskIntoConstraints = false
         
-        archiveButton.translatesAutoresizingMaskIntoConstraints = false
-        swithOnSelfLocationButton.translatesAutoresizingMaskIntoConstraints = false
-        stackActionMenu.translatesAutoresizingMaskIntoConstraints = false
+        let configImage = UIImage.SymbolConfiguration(pointSize: 25)
+    
+        archiveButton.setImage(UIImage(systemName: "archivebox", withConfiguration: configImage ), for: .normal)
+        locationButton.setImage(UIImage(systemName: "location", withConfiguration: configImage ), for: .normal)
+        archiveButton.addTarget(self, action: #selector(archiveButtonTapped), for: .touchUpInside)
+        [archiveButton,locationButton].forEach{ button in
+            button.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                button.widthAnchor.constraint(equalToConstant: 40),
+                button.heightAnchor.constraint(equalToConstant: 40),
+            ])
+            button.tintColor = .white
+            stackView.addArrangedSubview(button)
+        }
         
-        archiveButton.setImage(UIImage(named: "archive.png"), for: .normal)
-        swithOnSelfLocationButton.setImage(UIImage(named: "self.png"), for: .normal)
-        
-        stackActionMenu.addArrangedSubview(archiveButton)
-        stackActionMenu.addArrangedSubview(swithOnSelfLocationButton)
-        
-        stackActionMenu.axis = .vertical
-        stackActionMenu.alignment = .center
-        stackActionMenu.distribution = .fillEqually
-        
-        archiveButton.addTarget(self, action: #selector(didTapArchiveButton), for: .touchUpInside)
+        self.addSubview(blur)
+        self.addSubview(stackView)
         
         NSLayoutConstraint.activate([
-            stackActionMenu.topAnchor.constraint(equalTo: self.topAnchor),
-            stackActionMenu.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            stackActionMenu.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-            stackActionMenu.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+//            stackView.topAnchor.constraint(equalTo: self.topAnchor),
+//            stackView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            blur.topAnchor.constraint(equalTo: stackView.topAnchor),
+            blur.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+            blur.trailingAnchor.constraint(equalTo: stackView.trailingAnchor),
+            blur.bottomAnchor.constraint(equalTo: stackView.bottomAnchor),
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
+//            self.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+//            self.bottomAnchor.constraint(equalTo: stackView.bottomAnchor),
         ])
+        
     }
-    
-    @objc func didTapArchiveButton() {
-        archiveButtonTapped?()
+    @objc func archiveButtonTapped() {
+        tappedArchiveButton?()
     }
 }

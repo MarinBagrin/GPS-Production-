@@ -1,5 +1,5 @@
 import UIKit
-
+import Combine
 class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDataSource {
     var mainStack:UIStackView!
     var initialDatePicker:UIDatePicker!
@@ -16,10 +16,12 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
     var endContainer = UIView()
     var trackPicker = UIPickerView()
     var trackContainer = UIView()
+    var showRouteButton:UIButton!
     var blurEffect = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
     var viewModel: MapViewModel
     private var pickedTrackerName:String?
     var coordinator:ArchieveCoordinator?
+    private var cancellabels = Set<AnyCancellable>()
     init(_ viewModel:MapViewModel,coordinator:ArchieveCoordinator) {
         self.viewModel = viewModel
         self.coordinator = coordinator
@@ -42,28 +44,42 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         viewModel.trackers.bind{[weak self] trackers in
             self?.trackPicker.reloadAllComponents()
         }
+        viewModel.getShowingRouteFlag()
+            .sink { [weak self] isShowingRoute in
+                self?.showRouteButton.isSelected = isShowingRoute
+            }
+            .store(in: &cancellabels)
     }
     private func setupUI() {
         func getStackDatePicker(with name:String) ->UIStackView{
             var title = UILabel()
+            title.setContentCompressionResistancePriority(.required, for: .horizontal)
             title.text = name
             title.translatesAutoresizingMaskIntoConstraints = false
-            
+            title.textAlignment = .justified
+            title.font = .systemFont(ofSize: 18)
+        
             var date = UIDatePicker()
             date.datePickerMode = .dateAndTime
             date.preferredDatePickerStyle = .compact
+
             if (name == "Initial date") {
                 self.initialDatePicker = date
             }
             else if (name == "End date") {
                 self.endDatePicker = date
             }
+            date.minimumDate = Date.now.addingTimeInterval(-24*60*60)
+            date.maximumDate = Date.now
             date.translatesAutoresizingMaskIntoConstraints = false
             var dateStack = UIStackView(arrangedSubviews: [title,date])
-            dateStack.distribution = .equalSpacing
-            dateStack.spacing = 5
-            title.textAlignment = .center
+            dateStack.distribution = .fill
+            dateStack.spacing = 32
+            title.textAlignment = .natural
             dateStack.axis = .horizontal
+            //dateStack.backgroundColor = .gray.withAlphaComponent(40)
+            dateStack.layer.cornerRadius = 4
+            date.layer.borderColor = UIColor.gray.cgColor
             //dateStack.distribution =
             //date.contentHorizontalAlignment = .center
             //dateStack.spacing = 1
@@ -79,7 +95,12 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
             ])
             return separator
         }
+        var blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
+        
+        blur.translatesAutoresizingMaskIntoConstraints = false
+        blur.layer.cornerRadius = 12
         var title = UILabel()
+        
         // пусть label «любит» свой контент сильнее, чем растягиваться
         //title.setContentHuggingPriority(.required, for: .vertical)
 
@@ -89,20 +110,43 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         title.font = .systemFont(ofSize: 24)
         title.textAlignment = .center
         title.translatesAutoresizingMaskIntoConstraints = false
-        var closeButton = UIButton(type: .close)
-        var routeButton = UIButton(type: .system)
+        
+        let closeButton = UIButton()
+        
+        let routeButton = UIButton()
+        
         closeButton.setTitle("Close", for: .normal)
+        closeButton.setTitleColor(.red, for: .normal)
+        closeButton.titleLabel?.font = .systemFont(ofSize: 20)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.addTarget(self, action: #selector(showRouteButtonTapped), for: .touchUpInside)
+        closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
+        closeButton.backgroundColor = UIColor(white: 0.3, alpha: 0.6)
+        closeButton.layer.cornerRadius = 8
+        
         routeButton.setTitle("Show route", for: .normal)
+        routeButton.setTitle("Hide route", for: .selected)
+
+        routeButton.titleLabel?.font = .systemFont(ofSize: 20)
+
         routeButton.translatesAutoresizingMaskIntoConstraints = false
-        
-        
+        routeButton.backgroundColor = UIColor(white: 0.3, alpha: 0.6)
+        routeButton.layer.cornerRadius = 8
+        routeButton.titleLabel?.textColor = .white
         
         routeButton.addTarget(self, action: #selector(showRouteButtonTapped), for: .touchUpInside)
+        
+        showRouteButton = routeButton
         let buttonStack = UIStackView(arrangedSubviews: [closeButton,routeButton])
+        //buttonStack.alignment =
+        //buttonStack.alignment =
+        buttonStack.spacing = 12
+        buttonStack.distribution = .fillEqually
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.axis = .horizontal
+        // Задаём отступы для всего стека
+        buttonStack.layoutMargins = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
+        // Говорим, что при распределении места нужно учитывать эти отступы
+        buttonStack.isLayoutMarginsRelativeArrangement = true
         trackPicker.delegate = self
         trackPicker.dataSource = self
         trackPicker.translatesAutoresizingMaskIntoConstraints = false
@@ -112,42 +156,62 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
             getStackDatePicker(with: "Initial date"),
             getSeparator(),
             getStackDatePicker(with: "End date"),
-            getSeparator(),
             buttonStack,
         ])
         
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         mainStack.axis = .vertical
-        mainStack.backgroundColor = .black
+        mainStack.backgroundColor = UIColor.black.withAlphaComponent(0.33)
         //mainStack.alignment = .center
-        mainStack.layer.cornerRadius = 8
-        
+        mainStack.layer.cornerRadius = 12
+        mainStack.spacing = 4
+        mainStack.layoutMargins = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+        mainStack.isLayoutMarginsRelativeArrangement = true
+        // Говорим, что при распределении места нужно учитывать эти отст
         mainStack.distribution = .fill
+        self.view.addSubview(blur)
+
         self.view.addSubview(mainStack)
-        
         NSLayoutConstraint.activate([
-            title.heightAnchor.constraint(equalToConstant: 100),
+            //title.heightAnchor.constraint(equalToConstant: 12*3),
             mainStack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
             mainStack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            blur.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            blur.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            blur.widthAnchor.constraint(equalTo: mainStack.widthAnchor),
+            blur.heightAnchor.constraint(equalTo: mainStack.heightAnchor),
+            buttonStack.heightAnchor.constraint(equalToConstant: 48),
             mainStack.heightAnchor.constraint(equalTo: self.view.heightAnchor, multiplier: 0.4),
             mainStack.widthAnchor.constraint(equalTo: self.view.heightAnchor, multiplier: 0.4)
         ])
     }
-    
-    @objc func showRouteButtonTapped() {
-        let selectInitialDate = initialDatePicker.date
-        let selectEndDate = endDatePicker.date
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        
-        let strInitialDate = formatter.string(from: selectInitialDate)
-        let strEndDate = formatter.string(from: selectEndDate)
-        print(strInitialDate, strEndDate)
-        guard let pickedName = pickedTrackerName else {print("archive error picked name");return }
-        viewModel.setArchiveShowing(initial:strInitialDate, end:strEndDate, for:pickedName)
-        print("dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss")
+    @objc func closeButtonTapped() {
         coordinator?.closeArchiveVC()
+    }
+    @objc func showRouteButtonTapped(sender:UIButton) {
+        viewModel.toogleShowingRouteFlag()
+
+        if sender.isSelected {
+            let selectInitialDate = initialDatePicker.date
+            let selectEndDate = endDatePicker.date
+            
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm"
+            
+            let strInitialDate = formatter.string(from: selectInitialDate)
+            let strEndDate = formatter.string(from: selectEndDate)
+            print(strInitialDate, strEndDate)
+            guard let pickedName = pickedTrackerName else {print("archive error picked name");return }
+            viewModel.setArchiveShowing(initial:strInitialDate, end:strEndDate, for:pickedName)
+            print("dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss")
+            coordinator?.closeArchiveVC()
+        }
+        else {
+            viewModel.setOnlineShowing()
+            coordinator?.closeArchiveVC()
+
+        }
+
     }
     // MARK: - UIPickerViewDataSource
     func numberOfComponents(in pickerView: UIPickerView) -> Int {

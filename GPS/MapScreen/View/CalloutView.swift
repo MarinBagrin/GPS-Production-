@@ -66,3 +66,5 @@ class CalloutView: UIView {
 }
 
 var dictConnection:[Conection:String] = [Conection.missing:"Offline", Conection.medium:"Medium",Conection.stable:"Stable"]
+
+

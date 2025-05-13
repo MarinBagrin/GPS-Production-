@@ -53,9 +53,16 @@ class NetworkRepositoryImpl{
         configureConnection()
         startAsyncManageConnection()
     }
-    
+    func cancelConnectionIfNeeded()
+    {
+        if (isStarted) {
+            connection?.cancel()
+            connection = nil
+        }
+    }
     private func configureConnection() {
         integ += 1
+        isStarted = true
         guard let addresForConnect = getDataForConnect?() else {print("ошибка, get dataForConnect");return}
         host = NWEndpoint.Host(addresForConnect.host)
         port = NWEndpoint.Port(rawValue: addresForConnect.port)
@@ -73,10 +80,8 @@ class NetworkRepositoryImpl{
                 //self.isConnected.value = false
             case .failed(let error):
                 print("Соединение не удалось. Ошибка: \(error.localizedDescription)")
-                self.isConnected.value = false
             case .cancelled:
                 print("Соединение было отменено.")
-                self.isConnected.value = false
             case .preparing:
                 print("Соединение готовится к установке.")
                 print("kakoy raz",self.integ)
@@ -98,13 +103,7 @@ class NetworkRepositoryImpl{
         }
     }
     
-    func cancelConnectionIfNeeded()
-    {
-        if (isStarted) {
-            connection?.cancel()
-            connection = nil
-        }
-    }
+  
     
     
     func sendRequestUnAuth() {
@@ -121,7 +120,7 @@ class NetworkRepositoryImpl{
     }
     
     func recieveDataTrackers() {
-        connection?.receive(minimumIncompleteLength: 1, maximumLength: 1450) {  data, _, isComplete, error in
+        connection?.receive(minimumIncompleteLength: 1, maximumLength: 1_000_000) {  data, _, isComplete, error in
             if (error != nil) {
                 print("off iz za error")
                 self.isConnected.value = false
@@ -147,6 +146,7 @@ class NetworkRepositoryImpl{
                 }
             }
             self.recieveDataTrackers()
+            print("mnogo raz")
         }
     }
     func readMessageFromBuffer() {
@@ -156,8 +156,8 @@ class NetworkRepositoryImpl{
         let to = collectionBytes.index(from, offsetBy: currentLenMessage)
         
         let data = collectionBytes[from..<to]
-        collectionBytes.removeFirst(currentLenMessage+4)
-        guard let request = String(data: data, encoding: .utf8) else {print("no request recive"); return}
+        collectionBytes.removeFirst(4+currentLenMessage)
+        guard let request = String(data: data.prefix(10), encoding: .utf8) else {print("no request recive"); return}
         if (request.contains("AllowAuth/")) {
             self.saveCorrectCredentials?(self.credentials!)
             self.stateAuthenticated.value = .yes
@@ -171,10 +171,12 @@ class NetworkRepositoryImpl{
         else if(request.contains("UnAllowAuth")) {
             self.stateAuthenticated.value = .wrong
         }
-        else if (request.contains("Archive")) {
+        else if (request.contains("Archive../")) {
             do {
                 let start = data.startIndex
-                let from = data.index(start, offsetBy: 7)
+                let from = data.index(start, offsetBy: 10)
+                print("count archive bytes: ",data[from...])
+                print("count collections bytes: ",collectionBytes.count)
                 let recTrackers =  try tracker_list(serializedBytes:data[from...])
                 print("Успешно десериализован archive:\(recTrackers)")
                 self.recTrackersArchive.value.removeAll()
@@ -197,7 +199,7 @@ class NetworkRepositoryImpl{
                 print("count archiveTrackers: ", recTrackers.trackers.count)
             }
             catch {
-                print("Не успешно десериализован архив")
+                print("Не успешно десериализован архив",error)
                 
             }
         }
@@ -243,17 +245,18 @@ extension NetworkRepositoryImpl:NetworkRepository {
         return recTrackersArchive.eraseToAnyPublisher()
     }
     func sendRequestForArchive(initial:String,end:String, for pickedName:String) {
-        
-        let text = "requestArchive/\(pickedName)/\(initial)/\(end)/"
-        let message = text.data(using: .utf8)!
-        connection?.send(content: message, completion: .contentProcessed { error in
-            if let error = error {
-                print("Request archive was not sended: \(error)")
-            } else {
-                print("Request archive was sended")
-            }
-        })
-    }
+            
+            let text = "ravch/\(pickedName)/\(initial)/\(end)/"
+            let message = text.data(using: .utf8)!
+        print("the data sended for archive: ",text)
+            connection?.send(content: message, completion: .contentProcessed { error in
+                if let error = error {
+                    print("Request archive was not sended: \(error)")
+                } else {
+                    print("Request archive was sended")
+                }
+            })
+        }
 //    func sendRequestForArchive(initial:String,end:String, for pickedName:String) {//test
 //        let coordinates: [CLLocationCoordinate2D] = [
 //            // 1) Chișinău Railway Station

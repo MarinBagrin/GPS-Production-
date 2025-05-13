@@ -39,6 +39,7 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         super.viewDidLoad()
         setupUI()
         bindViewModel()
+        
     }
     private func bindViewModel() {
         viewModel.trackers.bind{[weak self] trackers in
@@ -49,6 +50,16 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
                 self?.showRouteButton.isSelected = isShowingRoute
             }
             .store(in: &cancellabels)
+        // Подписываемся на уведомление о переходе в фон
+           NotificationCenter.default.addObserver(
+               self,
+               selector: #selector(appDidEnterBackground),
+               name: UIApplication.didEnterBackgroundNotification,
+               object: nil
+           )
+    }
+    @objc func appDidEnterBackground() {
+        coordinator?.closeArchiveVC()
     }
     private func setupUI() {
         func getStackDatePicker(with name:String) ->UIStackView{
@@ -69,8 +80,8 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
             else if (name == "End date") {
                 self.endDatePicker = date
             }
-            date.minimumDate = Date.now.addingTimeInterval(-24*60*60)
-            date.maximumDate = Date.now
+//            date.minimumDate = Date.now.addingTimeInterval(-24*60*60)
+//            date.maximumDate = Date.now
             date.translatesAutoresizingMaskIntoConstraints = false
             var dateStack = UIStackView(arrangedSubviews: [title,date])
             dateStack.distribution = .fill
@@ -125,7 +136,7 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         
         routeButton.setTitle("Show route", for: .normal)
         routeButton.setTitle("Hide route", for: .selected)
-
+        routeButton.isEnabled = false
         routeButton.titleLabel?.font = .systemFont(ofSize: 20)
 
         routeButton.translatesAutoresizingMaskIntoConstraints = false
@@ -189,29 +200,34 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
         coordinator?.closeArchiveVC()
     }
     @objc func showRouteButtonTapped(sender:UIButton) {
+        let selectInitialDate = initialDatePicker.date
+        let selectEndDate = endDatePicker.date
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        
+        let strInitialDate = formatter.string(from: selectInitialDate)
+        let strEndDate = formatter.string(from: selectEndDate)
+        print(strInitialDate, strEndDate)
+        if (strInitialDate == strEndDate && !sender.isSelected) {
+            return
+        }
         viewModel.toogleShowingRouteFlag()
-
+        
         if sender.isSelected {
-            let selectInitialDate = initialDatePicker.date
-            let selectEndDate = endDatePicker.date
             
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd HH:mm"
+            if nil == pickedTrackerName {
+                pickedTrackerName = viewModel.trackers.value[0].value.name
+            }
             
-            let strInitialDate = formatter.string(from: selectInitialDate)
-            let strEndDate = formatter.string(from: selectEndDate)
-            print(strInitialDate, strEndDate)
-            guard let pickedName = pickedTrackerName else {print("archive error picked name");return }
-            viewModel.setArchiveShowing(initial:strInitialDate, end:strEndDate, for:pickedName)
-            print("dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss","dismiss")
+            viewModel.setArchiveShowing(initial:strInitialDate, end:strEndDate, for:pickedTrackerName!)
+            print("dismiss ArchiveVC and send archive request ofr time: \(strInitialDate), \(strEndDate)")
+            
             coordinator?.closeArchiveVC()
         }
         else {
             viewModel.setOnlineShowing()
-            coordinator?.closeArchiveVC()
-
         }
-
     }
     // MARK: - UIPickerViewDataSource
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
@@ -219,6 +235,9 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
     }
     
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        if viewModel.trackers.value.count > 0 {
+            showRouteButton.isEnabled = true
+        }
         return viewModel.trackers.value.count
     }
     

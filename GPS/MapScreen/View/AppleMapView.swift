@@ -66,7 +66,9 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 else {
                     if let routePolyline = self?.routePolyline {
                         self?.map.removeOverlay(routePolyline)
+                        self?.map.undoManager?.removeAllActions()
                         self?.map.removeAnnotations(self?.archiveAnnotations ?? [])
+                        self?.archiveAnnotations.removeAll()
                     }
                 }
             }
@@ -158,6 +160,28 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 annotationView = StoppedAnnotationView(annotation: annotation,reuseIdentifier:identifer)
             }
         }
+        else if annotation is AnnotationBegin {
+            let identifer = "annotationBegin"
+            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
+            if annotationView == nil {
+                annotationView = BeginAnnotationView(annotation: annotation,reuseIdentifier:identifer)
+            }
+        }
+         else if annotation is AnnotationEnd {
+            let identifer = "annotationEnd"
+            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
+            if annotationView == nil {
+                annotationView = EndAnnotationView(annotation: annotation,reuseIdentifier:identifer)
+            }
+        }
+         else if annotation is AnnotationFall {
+            let identifer = "annotationFall"
+            annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
+            if annotationView == nil {
+                annotationView = FallAnnotationView(annotation: annotation,reuseIdentifier:identifer)
+            }
+        }
+        
         return annotationView
         
     }
@@ -244,7 +268,36 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 }
             }
         }
-        
+        func checkValidityFall(arrTM: inout [TrackerMap]) {
+            for i in 0..<arrTM.count {
+                if arrTM[i].state != .trash {
+                    if i+1 < arrTM.count && arrTM[i+1].state != .trash {
+                        if arrTM[i+1].time.timeIntervalSince(arrTM[i].time) > 120 {
+                            arrTM[i].state = .fall
+                        }
+                    }
+                }
+            }
+        }
+     func setValidityBeginEnd(arrTM: inout [TrackerMap]) {
+         var flagBegin = false
+         var flagEnd = false
+            for i in 0..<arrTM.count {
+                if arrTM[i].state != .trash && flagBegin != false {
+                    flagBegin = true
+                    arrTM[i].state = .begin
+                }
+                var endIndex = arrTM.count - i - 1
+                if arrTM[endIndex].state != .trash && flagBegin != false {
+                    flagEnd = true
+                    arrTM[endIndex].state = .end
+                }
+                if flagBegin && flagEnd {
+                    break
+                }
+            }
+         //arrTM.removeAll()
+        }
         var coordinates:[CLLocationCoordinate2D] = []
         var statingTrackers:[TrackerMap] = []
         
@@ -254,9 +307,21 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         
         for i in 0..<viewModel.archiveTrackers.count {//фильтрация данных
             let tracker = viewModel.archiveTrackers[i]
-            print("ccordds: ", tracker.lat == 0 , tracker.long == 0 )
-            if tracker.lat == 0 || tracker.long == 0  {print("zalupazalupazalupazalupazalupazalupazalupazalupazalupazalupazalupa");continue}
-            if abs(Double(last.latitude + last.longitude) - (tracker.lat + tracker.long)) > 0.5{print("belicbelicbelicbelicbelic");continue}
+            if tracker.lat == 0 || tracker.long == 0  {
+                print("coords: 0 tracker sos sos sos");
+                if i+1 != viewModel.archiveTrackers.count {
+                    last = CLLocationCoordinate2D(latitude: viewModel.archiveTrackers[i+1].lat, longitude: viewModel.archiveTrackers[i+1].long)
+                }
+                continue
+            }
+            if abs(Double(last.latitude + last.longitude) - (tracker.lat + tracker.long)) > 0.5{
+                print("belicbelicbelicbelicbelic");
+                print("last", last)
+                print("now", tracker.lat, tracker.long)
+                if i+1 != viewModel.archiveTrackers.count {
+                    last = CLLocationCoordinate2D(latitude: viewModel.archiveTrackers[i+1].lat, longitude: viewModel.archiveTrackers[i+1].long)
+                }
+                continue}
             
             let current =  CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
             last = (statingTrackers.count != 0) ? statingTrackers[statingTrackers.count-1].coordinates : current
@@ -274,6 +339,9 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         checkValidityDriving(arrTM: &statingTrackers, arrCC: &coordinates)
         compressAndCheckValidityParkeds(arrTM: &statingTrackers, arrCC: &coordinates)
         setAngle(for: &statingTrackers)
+        checkValidityFall(arrTM: &statingTrackers)
+        setValidityBeginEnd(arrTM: &statingTrackers)
+        
         print(statingTrackers)
         for statingTracker in statingTrackers {
             if statingTracker.state != .trash {
@@ -286,7 +354,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             switch statingTracker.state {
             case .parking:
                 print("паркинг esti") // проблема, нету ни одного паркинга
-
+                
                 archiveAnnotations.append(AnnotationParked(tracker:statingTracker))
             case .driving:
                 
@@ -296,14 +364,22 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 archiveAnnotations.append(AnnotationStopped(tracker:statingTracker))
             case .trash:
                 break
+            
+            case .begin:
+                archiveAnnotations.append(AnnotationBegin(tracker: statingTracker))
+            case .end:
+                archiveAnnotations.append(AnnotationEnd(tracker: statingTracker))
+            case .fall:
+                archiveAnnotations.append(AnnotationFall(tracker: statingTracker))
             }
+        
         }
 
         print("После фильтрации:")
-        print("Мин. широта:", coordinates.map{$0.latitude}.min()!)
-        print("Макс. широта:", coordinates.map{$0.latitude}.max()!)
-        print("Мин. долгота:", coordinates.map{$0.longitude}.min()!)
-        print("Макс. долгота:", coordinates.map{$0.longitude}.max()!)
+//        print("Мин. широта:", coordinates.map{$0.latitude}.min()!)
+//        print("Макс. широта:", coordinates.map{$0.latitude}.max()!)
+//        print("Мин. долгота:", coordinates.map{$0.longitude}.min()!)
+//        print("Макс. долгота:", coordinates.map{$0.longitude}.max()!)
         print("count coordinates:", coordinates.count)
         print("Count statingsTrackersMap:",statingTrackers.count)
         print("count annotations:", archiveAnnotations.count)
@@ -340,6 +416,8 @@ class TrackerMap {
     var time:Date
     var speed:Int
     var angle:Double = 0
+    var duration:TimeInterval = 0
+
     init(coordinates:CLLocationCoordinate2D,meters:Int,state:StateTracker,time:Date?,speed:Int) {
         self.coordinates = coordinates
         self.meters = meters
@@ -458,7 +536,7 @@ class ParkedAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "parked")!, targetSize: CGSize(width: 25, height: 25))
+        self.image = resizeImage(image: UIImage(named: "parked")!, targetSize: CGSize(width: 35, height: 35))
         
     }
 }
@@ -470,7 +548,43 @@ class StoppedAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "stopped")!, targetSize: CGSize(width: 25, height: 25))
+        self.image = resizeImage(image: UIImage(named: "stopped")!, targetSize: CGSize(width: 35, height: 35))
+        
+    }
+}
+class FallAnnotationView:MKAnnotationView {
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {fatalError("init(coder:) has not been implemented")}
+    init(annotation:MKAnnotation,reuseIdentifier:String) {
+        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    private func setupUI() {
+        self.image = resizeImage(image: UIImage(named: "fall.png")!, targetSize: CGSize(width: 35, height: 35))
+    }
+}
+class BeginAnnotationView:MKAnnotationView {
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {fatalError("init(coder:) has not been implemented")}
+    init(annotation:MKAnnotation,reuseIdentifier:String) {
+        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    private func setupUI() {
+        self.image = resizeImage(image: UIImage(named: "begin.png")!, targetSize: CGSize(width: 89, height: 89))
+        
+    }
+}
+
+class EndAnnotationView:MKAnnotationView {
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {fatalError("init(coder:) has not been implemented")}
+    init(annotation:MKAnnotation,reuseIdentifier:String) {
+        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    private func setupUI() {
+        self.image = resizeImage(image: UIImage(named: "end.png")!, targetSize: CGSize(width: 100, height: 333))
         
     }
 }
@@ -499,6 +613,43 @@ class AnnotationParked:NSObject,MKAnnotation {
         self.tracker = tracker
     }
 }
+class AnnotationFall:NSObject,MKAnnotation {
+    @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
+    var title: String?
+    var subtitle: String?
+    var tracker:TrackerMap!
+
+    
+    init(tracker:TrackerMap) {
+        coordinate = tracker.coordinates
+        self.tracker = tracker
+    }
+}
+class AnnotationBegin:NSObject,MKAnnotation {
+    @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
+    var title: String?
+    var subtitle: String?
+    var tracker:TrackerMap!
+
+    
+    init(tracker:TrackerMap) {
+        coordinate = tracker.coordinates
+        self.tracker = tracker
+    }
+}
+class AnnotationEnd:NSObject,MKAnnotation {
+    @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
+    var title: String?
+    var subtitle: String?
+    var tracker:TrackerMap!
+
+    
+    init(tracker:TrackerMap) {
+        coordinate = tracker.coordinates
+        self.tracker = tracker
+    }
+}
+
 class AnnotationDriving:NSObject,MKAnnotation {
     @objc dynamic var coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D()
     var title: String?
@@ -511,7 +662,7 @@ class AnnotationDriving:NSObject,MKAnnotation {
 }
 
 enum StateTracker {
-    case parking, driving, stoping, trash
+    case begin, end, parking, driving, stoping, trash, fall
 }
 
 /// Вычисляет азимут (bearing) от `from` к `to` в градусах (0…360)

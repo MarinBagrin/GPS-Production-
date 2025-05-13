@@ -164,7 +164,7 @@ class TrackerViewModel {
     var connectionNET:Conection
     var neededHiden:Bool = false
     init(_ trackerModel:TrackerModel) {
-        lat = trackerModel.lat ?? 0
+        lat = trackerModel.lat 
         long = trackerModel.long
         name = trackerModel.name
         id = trackerModel.id

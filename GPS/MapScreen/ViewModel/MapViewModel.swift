@@ -23,7 +23,8 @@ class MapViewModel {
     var onOpenSettings:(() -> Void)?
     var onArchive:(() -> Void)?
     @Published var stateShowing:stateShowing = .online
-    @Published var archiveTrackers:[TrackerViewModel] = []
+    @Published var archiveTrackers:[[TrackerViewModel]] = []
+    @Published var countArchives = 0
     private var cancellabels = Set<AnyCancellable>()
 
     
@@ -37,6 +38,7 @@ class MapViewModel {
     func setOnlineShowing() { //метод для выключения (dismiss ArchiveVC)
         stateShowing = .online
         trackersUseCase.sendSignal()
+        archiveTrackers.removeAll()
     }
     func setArchiveShowing(initial:String, end:String,for pickedName: String) {
         stateShowing = .archive
@@ -96,16 +98,21 @@ class MapViewModel {
         }
         
         trackersUseCase.getPublisherArchive()
-            .sink {[weak self] archive in
-                if self?.stateShowing == .archive {
-                    print("Основной массив с трекерами Онлайн опустошается!")
-                    
-                    
-                }
+            .receive(on: RunLoop.main)
+        
+            .sink {[weak self] archiveMatrice in
+                if archiveMatrice.isEmpty {print("recArchiveTrackersIsEmpty");return}
                 print("ViewModel archiveTrackers filling")
-                self?.archiveTrackers = archive.map{tracker in
-                    return TrackerViewModel(tracker)
+                
+                var bufferArchive = [TrackerViewModel]()
+                for trackers in archiveMatrice {
+                    for tracker in trackers {
+                        bufferArchive.append(TrackerViewModel(tracker))
+                    }
                 }
+                //self?.archiveTrackers.removeAll()
+                self?.archiveTrackers.append(bufferArchive)
+                self?.countArchives = (self?.archiveTrackers.count ?? 0) - 1
             }
             .store(in: &cancellabels)
         

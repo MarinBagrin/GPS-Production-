@@ -8,7 +8,7 @@ class TrackersUseCase {
     func sendSignal() {
         networkRepository.pushSignal()
     }
-    func getPublisherArchive() -> AnyPublisher<[TrackerModel],Never> {
+    func getPublisherArchive() -> AnyPublisher<[[TrackerModel]],Never> {
         return networkRepository.recTrackersArchiveOn
     }
     func getObservableTrackers() -> Observable<[Observable<TrackerModel>]> {

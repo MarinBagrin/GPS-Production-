@@ -11,7 +11,7 @@ protocol NetworkRepository {
     var stateAuthenticated: Observable<stateAuth> { get }
     var recivedTrackers:Observable<[Observable<TrackerModel>]> { get }
     var isConnected:Observable<Bool> { get }
-    var recTrackersArchiveOn:AnyPublisher<[TrackerModel],Never>{get}
+    var recTrackersArchiveOn:AnyPublisher<[[TrackerModel]],Never>{get}
 
 }
 protocol NetworkRepositoryDataLayer {
@@ -27,7 +27,8 @@ class NetworkRepositoryImpl{
     
     
     var recivedTrackers = Observable<[Observable<TrackerModel>]>([])
-    var recTrackersArchive = CurrentValueSubject<[TrackerModel],Never>([])
+    var recTrackersArchive = CurrentValueSubject<[[TrackerModel]],Never>([])
+    var recTrackersArchiveBuffer = [[TrackerModel]]()
     var isConnected = Observable<Bool>(false)
     var stateAuthenticated = Observable<stateAuth>(.no)
     var organisationName = ""
@@ -171,14 +172,20 @@ class NetworkRepositoryImpl{
         else if(request.contains("UnAllowAuth")) {
             self.stateAuthenticated.value = .wrong
         }
-        else if (request.contains("Archive../")) {
+        else if (request.contains("Archive")) {
             do {
+                let startReqIndex = request.index(request.startIndex, offsetBy: 7)
+                let endReqIndex = request.index(startReqIndex, offsetBy: 2)
+                
+                let countArchives = Int(request[startReqIndex..<endReqIndex]) ?? -1
+                print(request)
+                print("need recieve countArchives", countArchives)
                 let start = data.startIndex
                 let from = data.index(start, offsetBy: 10)
                 print("count archive bytes: ",data[from...])
                 print("count collections bytes: ",collectionBytes.count)
                 let recTrackers =  try tracker_list(serializedBytes:data[from...])
-                print("Успешно десериализован archive:\(recTrackers)")
+                print("Успешно десериализован archive:")
                 self.recTrackersArchive.value.removeAll()
                 var tempArchive = [TrackerModel]()
                 for recTracker in recTrackers.trackers {
@@ -195,11 +202,31 @@ class NetworkRepositoryImpl{
                     tempArchive.append(configTracker)
                 }
                 print("тут запонялется архвив trackers")
-                self.recTrackersArchive.value = tempArchive
+                self.recTrackersArchiveBuffer.append(tempArchive)
+                if recTrackersArchiveBuffer.count == countArchives {
+                    recTrackersArchive.value = recTrackersArchiveBuffer
+                    recTrackersArchiveBuffer.removeAll()
+                }
+                
                 print("count archiveTrackers: ", recTrackers.trackers.count)
+                
             }
             catch {
-                print("Не успешно десериализован архив",error)
+                let startReqIndex = request.index(request.startIndex, offsetBy: 7)
+                let endReqIndex = request.index(startReqIndex, offsetBy: 2)
+                
+                let countArchives = Int(request[startReqIndex..<endReqIndex]) ?? -1
+                
+                print("need recieve countArchives", countArchives)
+                self.recTrackersArchiveBuffer.append([])
+                if recTrackersArchiveBuffer.count == countArchives {
+                    recTrackersArchive.value = recTrackersArchiveBuffer
+                    recTrackersArchiveBuffer.removeAll()
+                }
+                
+                
+                print("Не успешно десериализован архив",error,"👄👄👄👄👄👄👄👄👄👄👄")
+                
                 
             }
         }
@@ -241,7 +268,7 @@ extension NetworkRepositoryImpl:NetworkRepositoryDataLayer {
     }
 }
 extension NetworkRepositoryImpl:NetworkRepository {
-    var recTrackersArchiveOn:AnyPublisher<[TrackerModel],Never> {
+    var recTrackersArchiveOn:AnyPublisher<[[TrackerModel]],Never> {
         return recTrackersArchive.eraseToAnyPublisher()
     }
     func sendRequestForArchive(initial:String,end:String, for pickedName:String) {

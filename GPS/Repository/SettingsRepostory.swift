@@ -63,7 +63,7 @@ class SettingsRepositoryImpl: SettingsRepository {
         return isChangedIpPort || isChangedLanguage
     }
     func saveConfigurationSettings() {
-        print("save language in storage memprry,",buttonsShortLanguageDict[selectedLanguage.value])
+        print("save language in storage memprry,",buttonsShortLanguageDict[selectedLanguage.value] ?? "no language")
         UserDefaults.standard.set(buttonsShortLanguageDict[selectedLanguage.value], forKey: "language")
         UserDefaults.standard.set(isSavedAuth.value, forKey: "isSaved")
         UserDefaults.standard.set(ip.value, forKey: "ip")

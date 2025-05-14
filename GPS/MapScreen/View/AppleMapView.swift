@@ -19,11 +19,11 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
     var archiveTrackers:[TrackerViewModel] = []
     var selfLoaction = MKPointAnnotation()
     var viewModel: MapViewModel
-    var routePolyline:MKPolyline?
+    var routesPolyline = [MKPolyline]()
     var headingObserver: NSKeyValueObservation?
     var displayLink: CADisplayLink?
-
-
+    
+    
     @Published var angleCamera = Double(0)
     var cancellabels = Set<AnyCancellable>()
     init(_ superFrame: CGRect, viewModel: MapViewModel) {
@@ -53,23 +53,24 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             
         }
         
-        viewModel.$stateShowing.combineLatest(viewModel.$archiveTrackers)
+        Publishers.CombineLatest3(viewModel.$stateShowing,viewModel.$archiveTrackers,viewModel.$countArchives)
             .receive(on:  RunLoop.main)
-            .sink{[weak self] stateShowing,archiveTrackers in
-                self?.archiveTrackers = archiveTrackers
+            .sink{[weak self] stateShowing,archiveTrackers,indexArchive in
+                //print(stateShowing, archiveTrackers.count, indexArchive)
+                if archiveTrackers.count == 0 || archiveTrackers.count <= indexArchive  {          print("archiveTrackers что то с индексом");return}
+                self?.archiveTrackers = archiveTrackers[indexArchive]
                 print("state showing: ", stateShowing)
                 print("archiveTrackers: ", archiveTrackers.count)
-                if stateShowing == .archive && !archiveTrackers.isEmpty {
+                if stateShowing == .archive && !archiveTrackers[indexArchive].isEmpty {
                     print("drawRoute")
-                    self?.drawRoute()
+                    self?.drawRoute(for:archiveTrackers[indexArchive])
                 }
                 else {
-                    if let routePolyline = self?.routePolyline {
-                        self?.map.removeOverlay(routePolyline)
-                        self?.map.undoManager?.removeAllActions()
-                        self?.map.removeAnnotations(self?.archiveAnnotations ?? [])
-                        self?.archiveAnnotations.removeAll()
-                    }
+                    
+                    self?.map.removeOverlays(self?.routesPolyline ?? [])
+                    //self?.map.undoManager?.removeAllActions()
+                    self?.map.removeAnnotations(self?.archiveAnnotations ?? [])
+                    self?.archiveAnnotations.removeAll()
                 }
             }
             .store(in: &cancellabels)
@@ -79,7 +80,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 return
             }
             self?.map.setRegion(region, animated: true)
-        
+            
         }//замыкание
         $angleCamera
             .sink{[weak self ] heading in
@@ -96,7 +97,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             }
             .store(in: &cancellabels)
         headingObserver = map.observe(\.camera.heading, options: [.new]) {[weak self] map, change in
-
+            
             if let newHeading = change.newValue {
                 print("KVO Новое направление: \(newHeading)")
                 self?.angleCamera = newHeading
@@ -142,7 +143,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             if annotationView == nil {
                 annotationView = DrivingAnnotationView(annotation: annotation,reuseIdentifier:identifer)
             }
-            print(abs(angleCamera - (annotation as! AnnotationDriving).tracker.angle))
+            //print(abs(angleCamera - (annotation as! AnnotationDriving).tracker.angle))
             annotationView.annotation = annotation
             (annotationView as! DrivingAnnotationView).updateTranfsform(heading: angleCamera)
         }
@@ -167,14 +168,14 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 annotationView = BeginAnnotationView(annotation: annotation,reuseIdentifier:identifer)
             }
         }
-         else if annotation is AnnotationEnd {
+        else if annotation is AnnotationEnd {
             let identifer = "annotationEnd"
             annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
             if annotationView == nil {
                 annotationView = EndAnnotationView(annotation: annotation,reuseIdentifier:identifer)
             }
         }
-         else if annotation is AnnotationFall {
+        else if annotation is AnnotationFall {
             let identifer = "annotationFall"
             annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifer)
             if annotationView == nil {
@@ -185,17 +186,17 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         return annotationView
         
     }
-//    func mapView(_ mapView:MKMapView, regionDidChangeAnimated: Bool) {
-//        angleCamera = map.camera.heading
-//    }
+    //    func mapView(_ mapView:MKMapView, regionDidChangeAnimated: Bool) {
+    //        angleCamera = map.camera.heading
+    //    }
     @objc func trackHeading() {
         if angleCamera != map.camera.heading {
             angleCamera = map.camera.heading
             //print("DCA Новое направление: \(angleCamera)")
-
+            
         }
     }
-    private func drawRoute() {
+    private func drawRoute(for archive:[TrackerViewModel]) {
         
         func distanceInMeters(from:CLLocationCoordinate2D, to:CLLocationCoordinate2D) -> Double {
             let loc1 = CLLocation(latitude: from.latitude, longitude: from.longitude)
@@ -240,7 +241,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             }
         }
         
-
+        
         func compressAndCheckValidityParkeds(arrTM: inout [TrackerMap],arrCC: inout [CLLocationCoordinate2D]) {
             for i in 0..<arrTM.count {
                 var intervalBetweenParkeds = TimeInterval(0)
@@ -269,48 +270,64 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             }
         }
         func checkValidityFall(arrTM: inout [TrackerMap]) {
-            for i in 0..<arrTM.count {
+            for i in 0..<arrTM.count-1 {
                 if arrTM[i].state != .trash {
-                    if i+1 < arrTM.count && arrTM[i+1].state != .trash {
-                        if arrTM[i+1].time.timeIntervalSince(arrTM[i].time) > 120 {
+                    for j in (i+1)..<(arrTM.count) {
+                        if arrTM[j].state != .trash && arrTM[j].time.timeIntervalSince(arrTM[i].time) > 120 {
                             arrTM[i].state = .fall
                         }
                     }
                 }
             }
         }
-     func setValidityBeginEnd(arrTM: inout [TrackerMap]) {
-         var flagBegin = false
-         var flagEnd = false
+        func setValidityBeginEnd(arrTM: inout [TrackerMap]) {
+//            var flagBegin = false
+//            var flagEnd = false
+//            for i in 0..<arrTM.count/2 {
+//                if arrTM[i].state != .trash && flagBegin != false {
+//                    flagBegin = true
+//                    arrTM[i].state = .begin
+//                }
+//                let endIndex = arrTM.count - i - 1
+//                if arrTM[endIndex].state != .trash && flagEnd != false {
+//                    flagEnd = true
+//                    arrTM[endIndex].state = .end
+//                }
+//                if flagBegin && flagEnd {
+//                    print(":)!@#!@3214124124")
+//                    break
+//                }
+//            }
+//            //arrTM.removeAll()
+            var isEmptyBegin = true
+            var isEmptyEnd = true
             for i in 0..<arrTM.count {
-                if arrTM[i].state != .trash && flagBegin != false {
-                    flagBegin = true
+                if arrTM[i].state != .trash && isEmptyBegin  {
                     arrTM[i].state = .begin
-                }
-                var endIndex = arrTM.count - i - 1
-                if arrTM[endIndex].state != .trash && flagBegin != false {
-                    flagEnd = true
-                    arrTM[endIndex].state = .end
-                }
-                if flagBegin && flagEnd {
-                    break
+                    isEmptyBegin = false
                 }
             }
-         //arrTM.removeAll()
+            for i in (0..<arrTM.count-1).reversed() {
+                if arrTM[i].state != .trash && isEmptyEnd  {
+                    arrTM[i].state = .end
+                    isEmptyEnd = false
+                }
+            }
+            
         }
         var coordinates:[CLLocationCoordinate2D] = []
         var statingTrackers:[TrackerMap] = []
         
-        var last = CLLocationCoordinate2D(latitude: viewModel.archiveTrackers[0].lat, longitude: viewModel.archiveTrackers[0].long)
+        var last = CLLocationCoordinate2D(latitude: archive[0].lat, longitude: archive[0].long)
         
         
         
-        for i in 0..<viewModel.archiveTrackers.count {//фильтрация данных
-            let tracker = viewModel.archiveTrackers[i]
+        for i in 0..<archive.count {//фильтрация данных
+            let tracker = archive[i]
             if tracker.lat == 0 || tracker.long == 0  {
                 print("coords: 0 tracker sos sos sos");
-                if i+1 != viewModel.archiveTrackers.count {
-                    last = CLLocationCoordinate2D(latitude: viewModel.archiveTrackers[i+1].lat, longitude: viewModel.archiveTrackers[i+1].long)
+                if i+1 != archive.count {
+                    last = CLLocationCoordinate2D(latitude: archive[i+1].lat, longitude: archive[i+1].long)
                 }
                 continue
             }
@@ -318,16 +335,17 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 print("belicbelicbelicbelicbelic");
                 print("last", last)
                 print("now", tracker.lat, tracker.long)
-                if i+1 != viewModel.archiveTrackers.count {
-                    last = CLLocationCoordinate2D(latitude: viewModel.archiveTrackers[i+1].lat, longitude: viewModel.archiveTrackers[i+1].long)
+                if i+1 != archive.count {
+                    last = CLLocationCoordinate2D(latitude: archive[i+1].lat, longitude: archive[i+1].long)
                 }
-                continue}
+                continue
+            }
             
             let current =  CLLocationCoordinate2D(latitude: tracker.lat, longitude: tracker.long)
             last = (statingTrackers.count != 0) ? statingTrackers[statingTrackers.count-1].coordinates : current
             let meters = distanceInMeters(from: last, to: current)
-            print("meters:", meters.rounded(), "speed: \(tracker.speed)km/h;", "time:",tracker.time, "lat:\(tracker.long); long:\(tracker.lat)")
-
+            //print("meters:", meters.rounded(), "speed: \(tracker.speed)km/h;", "time:",tracker.time, "lat:\(tracker.long); long:\(tracker.lat)")
+            
             if meters >= 10 || tracker.speed > 0 {
                 statingTrackers.append(TrackerMap(coordinates: current, meters: Int(meters), state: .driving,time: strToDate(str: tracker.time),speed:tracker.speed))
             }
@@ -342,11 +360,10 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         checkValidityFall(arrTM: &statingTrackers)
         setValidityBeginEnd(arrTM: &statingTrackers)
         
-        print(statingTrackers)
         for statingTracker in statingTrackers {
             if statingTracker.state != .trash {
                 coordinates.append(statingTracker.coordinates)
-//                print("meters:", statingTracker.meters, "speed: \(statingTracker.speed)km/h;", "time:",statingTracker.time, "lat:\(statingTracker.coordinates.longitude); long:\(statingTracker.coordinates.latitude)")
+                //                print("meters:", statingTracker.meters, "speed: \(statingTracker.speed)km/h;", "time:",statingTracker.time, "lat:\(statingTracker.coordinates.longitude); long:\(statingTracker.coordinates.latitude)")
                 
             }
             
@@ -364,7 +381,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 archiveAnnotations.append(AnnotationStopped(tracker:statingTracker))
             case .trash:
                 break
-            
+                
             case .begin:
                 archiveAnnotations.append(AnnotationBegin(tracker: statingTracker))
             case .end:
@@ -372,24 +389,24 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             case .fall:
                 archiveAnnotations.append(AnnotationFall(tracker: statingTracker))
             }
-        
+            
         }
-
+        
         print("После фильтрации:")
-//        print("Мин. широта:", coordinates.map{$0.latitude}.min()!)
-//        print("Макс. широта:", coordinates.map{$0.latitude}.max()!)
-//        print("Мин. долгота:", coordinates.map{$0.longitude}.min()!)
-//        print("Макс. долгота:", coordinates.map{$0.longitude}.max()!)
+        //        print("Мин. широта:", coordinates.map{$0.latitude}.min()!)
+        //        print("Макс. широта:", coordinates.map{$0.latitude}.max()!)
+        //        print("Мин. долгота:", coordinates.map{$0.longitude}.min()!)
+        //        print("Макс. долгота:", coordinates.map{$0.longitude}.max()!)
         print("count coordinates:", coordinates.count)
-        print("Count statingsTrackersMap:",statingTrackers.count)
+        print("count statingsTrackersMap:",statingTrackers.count)
         print("count annotations:", archiveAnnotations.count)
         
-        routePolyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+        var routePolyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
         
         
-        guard let routePolyline = routePolyline else {return}
         
         map.addOverlay(routePolyline)
+        routesPolyline.append(routePolyline)
         map.setVisibleMapRect(routePolyline.boundingMapRect, edgePadding: .init(top: 50, left: 50, bottom: 50, right: 50), animated: true)
         map.addAnnotations(archiveAnnotations)
     }
@@ -423,7 +440,7 @@ class TrackerMap {
         self.meters = meters
         self.state = state
         self.speed = speed
-        guard let date = time else {print("AMP code 0");self.time = .distantPast;return}
+        guard let date = time else {/*print("AMP code 0");*/self.time = .distantPast;return}
         self.time = date
         
     }
@@ -523,7 +540,7 @@ class DrivingAnnotationView:MKAnnotationView {
         
     }
     func updateTranfsform( heading:Double) {
-        var selfAngle = (annotation as! AnnotationDriving).tracker.angle
+        let selfAngle = (annotation as! AnnotationDriving).tracker.angle
         icon.transform = CGAffineTransform(rotationAngle: abs((selfAngle - heading)) * .pi / 180)
     }
     
@@ -672,18 +689,18 @@ func bearingDegrees(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) ->
     let λ1 = from.longitude * .pi / 180
     let φ2 = to.latitude    * .pi / 180
     let λ2 = to.longitude   * .pi / 180
-
+    
     // 2) Разница долгот
     let Δλ = λ2 - λ1
-
+    
     // 3) Компоненты X и Y
     let x = cos(φ2) * sin(Δλ)
     let y = cos(φ1) * sin(φ2)
-          - sin(φ1) * cos(φ2) * cos(Δλ)
-
+    - sin(φ1) * cos(φ2) * cos(Δλ)
+    
     // 4) Угол в радианах
     let θ = atan2(x, y)
-
+    
     // 5) Переводим в градусы и нормализуем в [0;360)
     var degrees = θ * 180 / .pi
     if degrees < 0 {

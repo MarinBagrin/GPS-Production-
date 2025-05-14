@@ -63,14 +63,14 @@ class ArchiveViewController:UIViewController,UIPickerViewDelegate,UIPickerViewDa
     }
     private func setupUI() {
         func getStackDatePicker(with name:String) ->UIStackView{
-            var title = UILabel()
+            let title = UILabel()
             title.setContentCompressionResistancePriority(.required, for: .horizontal)
             title.text = name
             title.translatesAutoresizingMaskIntoConstraints = false
             title.textAlignment = .justified
             title.font = .systemFont(ofSize: 18)
         
-            var date = UIDatePicker()
+            let date = UIDatePicker()
             date.datePickerMode = .dateAndTime
             date.preferredDatePickerStyle = .compact
 

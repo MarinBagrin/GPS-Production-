@@ -106,19 +106,31 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         displayLink = CADisplayLink(target: self, selector: #selector(trackHeading))
         displayLink?.add(to: .main, forMode: .common)
     }
+    
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         // Убедимся, что это наша полилиния
-        guard let polyline = overlay as? MKPolyline else {
-            return MKOverlayRenderer(overlay: overlay)
+        var renderer:MKPolylineRenderer!
+        if let fallPolyLine = overlay as? FallPolyLine {
+            renderer = MKPolylineRenderer(polyline: fallPolyLine)
+            renderer.lineWidth = 4               // толщина линии
+            renderer.strokeColor = .systemRed   // цвет линии
+            renderer.lineJoin = .bevel          // сглаженные стыки
+            print("fallPolyLine")
+        }
+        else if let polyLine = overlay as? MKPolyline {
+            renderer = MKPolylineRenderer(polyline: polyLine)
+            renderer.lineWidth = 4               // толщина линии
+            renderer.strokeColor = .systemBlue   // цвет линии
+            renderer.lineJoin = .bevel
+            print("PolyLine")
+
         }
         
-        // Настраиваем внешний вид линии
-        let renderer = MKPolylineRenderer(polyline: polyline)
-        renderer.lineWidth = 4               // толщина линии
-        renderer.strokeColor = .systemBlue   // цвет линии
-        renderer.lineJoin = .bevel          // сглаженные стыки
-        
+       
         return renderer
+    }
+    class FallPolyLine : MKPolyline {
+        
     }
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         var annotationView:MKAnnotationView!
@@ -271,34 +283,22 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         }
         func checkValidityFall(arrTM: inout [TrackerMap]) {
             for i in 0..<arrTM.count-1 {
-                if arrTM[i].state != .trash {
-                    for j in (i+1)..<(arrTM.count) {
-                        if arrTM[j].state != .trash && arrTM[j].time.timeIntervalSince(arrTM[i].time) > 120 {
-                            arrTM[i].state = .fall
-                        }
+                if arrTM[i].state == .trash {
+                    continue
+                }
+                for j in i+1..<arrTM.count {
+                    if arrTM[j].state == .trash {
+                        continue
                     }
+                    if arrTM[j].meters > 100 && arrTM[j].time.timeIntervalSince(arrTM[i].time) > 120 {
+                        arrTM[i].state = .fall
+                    }
+                    break
                 }
             }
         }
         func setValidityBeginEnd(arrTM: inout [TrackerMap]) {
-//            var flagBegin = false
-//            var flagEnd = false
-//            for i in 0..<arrTM.count/2 {
-//                if arrTM[i].state != .trash && flagBegin != false {
-//                    flagBegin = true
-//                    arrTM[i].state = .begin
-//                }
-//                let endIndex = arrTM.count - i - 1
-//                if arrTM[endIndex].state != .trash && flagEnd != false {
-//                    flagEnd = true
-//                    arrTM[endIndex].state = .end
-//                }
-//                if flagBegin && flagEnd {
-//                    print(":)!@#!@3214124124")
-//                    break
-//                }
-//            }
-//            //arrTM.removeAll()
+
             var isEmptyBegin = true
             var isEmptyEnd = true
             for i in 0..<arrTM.count {
@@ -401,13 +401,42 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         print("count statingsTrackersMap:",statingTrackers.count)
         print("count annotations:", archiveAnnotations.count)
         
-        var routePolyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
         
+        var arraysCoordinates = [[CLLocationCoordinate2D]]()
+        var arrayCoordinates = [CLLocationCoordinate2D]()
+        for i in 0..<statingTrackers.count-1 {
+            let tracker = statingTrackers[i]
+            if tracker.state == .fall {
+                arraysCoordinates.append(arrayCoordinates)
+                arrayCoordinates.removeAll()
+                for j in i+1..<statingTrackers.count {
+                    if statingTrackers[j].state != .trash {
+                        arraysCoordinates.append([tracker.coordinates,statingTrackers[j].coordinates])
+                        break
+                    }
+                }
+                
+            }
+            else if tracker.state != .trash {
+                arrayCoordinates.append(tracker.coordinates)
+            }
+        }
+        if !arrayCoordinates.isEmpty {
+            arraysCoordinates.append(arrayCoordinates)
+        }
         
+        for i in 0..<arraysCoordinates.count {
+            if i % 2 == 0 {
+                routesPolyline.append( MKPolyline(coordinates: arraysCoordinates[i], count: arraysCoordinates[i].count))
+            }
+            else {
+                routesPolyline.append( FallPolyLine(coordinates: arraysCoordinates[i], count: arraysCoordinates[i].count))
+
+            }
+        }
         
-        map.addOverlay(routePolyline)
-        routesPolyline.append(routePolyline)
-        map.setVisibleMapRect(routePolyline.boundingMapRect, edgePadding: .init(top: 50, left: 50, bottom: 50, right: 50), animated: true)
+        routesPolyline.forEach{map.addOverlay($0)}
+//        map.setVisibleMapRect(.world, edgePadding: .init(top: 50, left: 50, bottom: 50, right: 50), animated: true)
         map.addAnnotations(archiveAnnotations)
     }
     
@@ -532,8 +561,8 @@ class DrivingAnnotationView:MKAnnotationView {
         self.addSubview(icon)
         
         NSLayoutConstraint.activate([
-            icon.widthAnchor.constraint(equalToConstant: 25),
-            icon.heightAnchor.constraint(equalToConstant: 25),
+            icon.widthAnchor.constraint(equalToConstant: 35),
+            icon.heightAnchor.constraint(equalToConstant: 35),
             icon.centerYAnchor.constraint(equalTo: self.centerYAnchor),
             icon.centerXAnchor.constraint(equalTo: self.centerXAnchor),
         ])
@@ -553,7 +582,7 @@ class ParkedAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "parked")!, targetSize: CGSize(width: 35, height: 35))
+        self.image = resizeImage(image: UIImage(named: "parked")!, targetSize: CGSize(width: 45, height: 45))
         
     }
 }
@@ -565,7 +594,7 @@ class StoppedAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "stopped")!, targetSize: CGSize(width: 35, height: 35))
+        self.image = resizeImage(image: UIImage(named: "stopped")!, targetSize: CGSize(width: 40, height: 40))
         
     }
 }
@@ -577,7 +606,7 @@ class FallAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "fall.png")!, targetSize: CGSize(width: 35, height: 35))
+        self.image = resizeImage(image: UIImage(named: "fall.png")!, targetSize: CGSize(width: 45, height: 45))
     }
 }
 class BeginAnnotationView:MKAnnotationView {
@@ -588,7 +617,7 @@ class BeginAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "begin.png")!, targetSize: CGSize(width: 89, height: 89))
+        self.image = resizeImage(image: UIImage(named: "begin.png")!, targetSize: CGSize(width: 75, height: 75))
         
     }
 }
@@ -601,7 +630,7 @@ class EndAnnotationView:MKAnnotationView {
         setupUI()
     }
     private func setupUI() {
-        self.image = resizeImage(image: UIImage(named: "end.png")!, targetSize: CGSize(width: 100, height: 333))
+        self.image = resizeImage(image: UIImage(named: "end.png")!, targetSize: CGSize(width: 75, height: 75))
         
     }
 }

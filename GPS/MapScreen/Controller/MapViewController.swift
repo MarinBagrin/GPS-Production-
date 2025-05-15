@@ -12,7 +12,7 @@ class MapViewController: UIViewController {
     var mapViewModel:MapViewModel
     var appleMapView:AppleMapMnagerView!
     var toolBarSlideView:ToolBarSlideView!
-    var authenticationView:AuthenticationView!
+    //var authenticationView:AuthenticationView!
     var actionMenu:ActionMenu!
     //var actionMenu:ActionMenu!
     var coordinator:MapCoordinator?
@@ -36,7 +36,7 @@ class MapViewController: UIViewController {
         super.viewDidLoad()
         appleMapView = AppleMapMnagerView(self.view.frame,viewModel: mapViewModel)
         toolBarSlideView = ToolBarSlideView(frame: self.view.frame,viewModel: mapViewModel)
-        authenticationView = AuthenticationView(frame: self.view.frame,viewModel: mapViewModel)
+        //authenticationView = AuthenticationView(frame: self.view.frame,viewModel: mapViewModel)
         actionMenu = ActionMenu(viewModel: mapViewModel)
         setupUI()
         
@@ -47,7 +47,7 @@ private func setupUI() {
     self.view.addSubview(appleMapView.map)
     self.view.addSubview(actionMenu)
     self.view.addSubview(toolBarSlideView)
-    self.view.addSubview(authenticationView)
+    //self.view.addSubview(authenticationView)
 
     
     actionMenu.translatesAutoresizingMaskIntoConstraints = false
@@ -81,6 +81,8 @@ private func setupUI() {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         print("Main viewDidAppear")
+        coordinator?.showAuthenticateVC()
+
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -93,7 +95,9 @@ private func setupUI() {
     {
         
         super.viewDidDisappear(animated)
+
         print("Main viewDidDisappear")
+
     }
 }
 

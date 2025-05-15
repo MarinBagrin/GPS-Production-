@@ -9,8 +9,8 @@ import CoreLocation
 
 
 class TrackerModel {
-    var lat: Double!
-    var long: Double!
+    var lat: Double = 0
+    var long: Double = 0
     var latcash:Double = 0
     var longcash:Double = 0
     var name: String!

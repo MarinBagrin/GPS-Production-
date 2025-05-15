@@ -290,7 +290,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                     if arrTM[j].state == .trash {
                         continue
                     }
-                    if arrTM[j].meters > 100 && arrTM[j].time.timeIntervalSince(arrTM[i].time) > 120 {
+                    if arrTM[j].meters > 100 && arrTM[j].time.timeIntervalSince(arrTM[i].time) > 60 {
                         arrTM[i].state = .fall
                     }
                     break
@@ -373,10 +373,11 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 print("паркинг esti") // проблема, нету ни одного паркинга
                 
                 archiveAnnotations.append(AnnotationParked(tracker:statingTracker))
+                break
             case .driving:
                 
                 archiveAnnotations.append(AnnotationDriving(tracker:statingTracker))
-                
+                break
             case .stoping:
                 archiveAnnotations.append(AnnotationStopped(tracker:statingTracker))
             case .trash:
@@ -384,10 +385,13 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
                 
             case .begin:
                 archiveAnnotations.append(AnnotationBegin(tracker: statingTracker))
+                break
             case .end:
                 archiveAnnotations.append(AnnotationEnd(tracker: statingTracker))
+                break
             case .fall:
                 archiveAnnotations.append(AnnotationFall(tracker: statingTracker))
+                break
             }
             
         }
@@ -407,6 +411,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
         for i in 0..<statingTrackers.count-1 {
             let tracker = statingTrackers[i]
             if tracker.state == .fall {
+                arrayCoordinates.append(tracker.coordinates)
                 arraysCoordinates.append(arrayCoordinates)
                 arrayCoordinates.removeAll()
                 for j in i+1..<statingTrackers.count {

@@ -14,18 +14,40 @@ class MapCoordinator:Coordinator {
     var navController:UINavigationController
     var parrentCoordinator: Coordinator?
     var repositories:Repositories
+    var isStarted = false
     init(navController:UINavigationController, parrentCoordinator:Coordinator,repositories:Repositories) {
         self.navController = navController
         self.parrentCoordinator = parrentCoordinator
         self.repositories = repositories
-        
+        bind()
+    }
+    private func bind() {
+        self.repositories.network.stateAuthenticated.bind { [weak self] stateAuth in
+            guard let self = self else {print("returnMCBind");return;}
+            start()
+            if stateAuth == .no  {
+                var isContainAuthCoord = false
+                for coord in childCoordinators {
+                    if coord is AuthenticateCoordinator {
+                        isContainAuthCoord = true
+                        break
+                    }
+                }
+                if !isContainAuthCoord {
+                    showAuthenticateVC()
+                }
+            }
+        }
     }
     func removeFromSuperCoordinator() {
         parrentCoordinator?.restart()
     }
     func start() {
-        let mapVC = MapViewController(coordinator: self)
-        navController.pushViewController(mapVC, animated: false)
+        if !isStarted {
+            let mapVC = MapViewController(coordinator: self)
+            navController.pushViewController(mapVC, animated: false)
+            isStarted = true
+        }
     }
     func restart(){
         
@@ -40,6 +62,13 @@ class MapCoordinator:Coordinator {
         let settingsCoordinator = SettingsCoordinator(navController: navController, parrentCoordinator: self,repositories:repositories)
         childCoordinators.append(settingsCoordinator)
         settingsCoordinator.start()
+    }
+    func showAuthenticateVC() {
+        if repositories.network.stateAuthenticated.value == .no {
+            let authenticateCoordinator = AuthenticateCoordinator(navController: navController, parrentCoordinator: self, repositories: repositories)
+            childCoordinators.append(authenticateCoordinator)
+            authenticateCoordinator.start()
+        }
     }
 }
 
@@ -59,6 +88,7 @@ class SettingsCoordinator:Coordinator {
                 parrentCoordinator?.childCoordinators.remove(at: i)
             }
         }
+        //parrentCoordinator = nil
     }
     func start() {
         let settingsVC = SettingsViewController(coordinator: self)
@@ -73,4 +103,5 @@ class SettingsCoordinator:Coordinator {
     func popSettingsVC() {
         navController.popViewController(animated: true)
     }
+    
 }

@@ -33,12 +33,14 @@ class SettingsRepositoryImpl: SettingsRepository {
     private var networkRepository:NetworkRepositoryDataLayer
     private var credentials = Credentials(login: UserDefaults.standard.string(forKey: "login") ?? "",
                                           password: UserDefaults.standard.string(forKey: "pass") ?? "")
+    
     private var isShowingRoute = CurrentValueSubject<Bool,Never>(false)
+    private var isAuth: Bool = false
     var ipOn:AnyPublisher<String,Never> { ip.eraseToAnyPublisher()}
     var portOn:AnyPublisher<String,Never> {port.eraseToAnyPublisher()}
     var selectedLanguageOn:AnyPublisher<Language,Never> {selectedLanguage.eraseToAnyPublisher()}
     var isSavedAuthOn:AnyPublisher<Bool,Never> {isSavedAuth.eraseToAnyPublisher()}
-   
+    
 
     
     init(networkRepository:NetworkRepositoryDataLayer) {
@@ -49,10 +51,20 @@ class SettingsRepositoryImpl: SettingsRepository {
         self.networkRepository.saveCorrectCredentials = {[weak self] value in
             self?.credentials = value
         }
+        
         print(selectedLanguage.value)
         lang = selectedLanguage.value
     }
-    
+    func bind() {
+        self.networkRepository.stateAuthenticated.bind { [weak self] stateAuth in
+            if stateAuth == .no || stateAuth == .wrong || stateAuth == .processing {
+                self?.isAuth = false
+            }
+            else {
+                self?.isAuth = true
+            }
+        }
+    }
     
     func isChangedSettings() ->Bool {
         let isChangedIpPort = UserDefaults.standard.string(forKey: "ip") ?? "nill" != ip.value || UserDefaults.standard.string(forKey: "port") ?? "49500" != port.value
@@ -63,11 +75,24 @@ class SettingsRepositoryImpl: SettingsRepository {
         return isChangedIpPort || isChangedLanguage
     }
     func saveConfigurationSettings() {
-        print("save language in storage memprry,",buttonsShortLanguageDict[selectedLanguage.value] ?? "no language")
+        print("save language in storage memory,",buttonsShortLanguageDict[selectedLanguage.value] ?? "no language")
         UserDefaults.standard.set(buttonsShortLanguageDict[selectedLanguage.value], forKey: "language")
         UserDefaults.standard.set(isSavedAuth.value, forKey: "isSaved")
         UserDefaults.standard.set(ip.value, forKey: "ip")
         UserDefaults.standard.set(port.value, forKey: "port")
+        if !isSavedAuth.value {
+            UserDefaults.standard.set("", forKey: "login")
+            UserDefaults.standard.set("", forKey: "pass")
+            if !isAuth  {
+                credentials = Credentials(login: "", password: ""
+                )
+            }
+            
+        }
+        else {
+            UserDefaults.standard.set(credentials.login, forKey: "login")
+            UserDefaults.standard.set(credentials.password, forKey: "pass")
+        }
     }
     func restoreSavedSettings() {
         ip = CurrentValueSubject<String,Never>(UserDefaults.standard.string(forKey: "ip") ?? "95.65.72.7")
@@ -84,7 +109,6 @@ class SettingsRepositoryImpl: SettingsRepository {
 
     func toogleSaveCredentialsFlag() {
         isSavedAuth.value.toggle()
-
     }
     
     func replaceIp(forRange:NSRange,with:String) {

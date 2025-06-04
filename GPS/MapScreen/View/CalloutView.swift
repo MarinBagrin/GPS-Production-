@@ -1,70 +1,47 @@
 import UIKit
-
-class CalloutView: UIView {
-    //var image = UIImageView(image: UIImage(named: "bubble-speech.png"))
-    var title = UILabel()
-    var text = UITextView()
-    static var openCallout:CalloutView?
-    init() {
+class CalloutView:UIView {
+    let text = UILabel()
+    let name = UILabel()
+    init(trackerVM:Observable<TrackerViewModel>) {
         super.init(frame: .zero)
         setupUI()
-    }
-    private func setupUI() {
-        title.translatesAutoresizingMaskIntoConstraints = false
-        title.textAlignment = .center
-        title.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-
-        text.translatesAutoresizingMaskIntoConstraints = false
-        
-        
-        text.backgroundColor = UIColor.systemGray.withAlphaComponent(0.55)
-        
-        text.font = UIFont(name: "Arial", size: 18)
-        
-        self.backgroundColor = UIColor.black.withAlphaComponent(0.80)
-        self.translatesAutoresizingMaskIntoConstraints = false
-        self.layer.cornerRadius = 5
-        self.clipsToBounds = true
-        //self.layer.borderColor = UIColor.black.withAlphaComponent(0.5).cgColor
-        
-        self.addSubview(title)
-        NSLayoutConstraint.activate([
-            title.topAnchor.constraint(equalTo: self.topAnchor),
-            title.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.2),
-            title.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 0.5 ),
-            title.centerXAnchor.constraint(equalTo: self.centerXAnchor)
-        ])
-        self.addSubview(text)
-        NSLayoutConstraint.activate([
-            text.heightAnchor.constraint(equalTo: self.heightAnchor,multiplier: 0.8),
-            text.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            text.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1),
-            text.leadingAnchor.constraint(equalTo: self.leadingAnchor)
-        ])
-        
-    }
-    func updateData(tracker:TrackerViewModel) {
-        title.text = tracker.name
-        text.text = "Status:\(dictConnection[tracker.connectionNET]!);\nGPS Battery:\(String(tracker.battery))%\nGMS: Stable;\nTime:\(tracker.time);\nAddress:\(tracker.address)"
-        print("Yes")
-    }
-    func showHide() {
-        print("showHide")
-//        CalloutView.openCallout?.showHide()
-        if (CalloutView.openCallout == self) { CalloutView.openCallout = nil}
-        else {
-            CalloutView.openCallout?.showHide()
-            CalloutView.openCallout = self
+        trackerVM.bind { [weak self] trackerVM in
+            self?.text.text = "\(translate[lang]!["network"]!) \(trackerVM.networkBTS)% \n\(translate[lang]!["gps"]!) \(trackerVM.networkBTS) %  \n\(translate[lang]!["speed"]!) \(trackerVM.speed)km/h \n\(translate[lang]!["time_updated"]!) \(trackerVM.time)"
         }
-        UIView.animate(withDuration: 0.1, animations: {
-            self.alpha = self.alpha == 1 ? 0 : 1
-        })
     }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    private func setupUI() {
+        self.backgroundColor = .black.withAlphaComponent(0.35)
+
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+        self.translatesAutoresizingMaskIntoConstraints = false
+        blur.translatesAutoresizingMaskIntoConstraints = false
+        name.translatesAutoresizingMaskIntoConstraints = false
+        text.translatesAutoresizingMaskIntoConstraints = false
+        text.numberOfLines = 0
+        self.addSubview(blur)
+        self.addSubview(name)
+        self.addSubview(text)
+        text.font = UIFont.systemFont(ofSize: 20) 
+        NSLayoutConstraint.activate([
+            blur.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            blur.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            blur.heightAnchor.constraint(equalTo: self.heightAnchor),
+            blur.widthAnchor.constraint(equalTo: self.widthAnchor),
+            
+            name.topAnchor.constraint(equalTo: self.topAnchor),
+            name.widthAnchor.constraint(equalTo: self.widthAnchor),
+            
+            text.topAnchor.constraint(equalTo: name.bottomAnchor),
+            text.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            text.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            text.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+        ])
+        text.text = "\(translate[lang]!["network"]!) \n\(translate[lang]!["gps"]!)\n\(translate[lang]!["speed"]!)\n\(translate[lang]!["time_updated"] ?? "1")"
+        
+    }
+
 }
-
-var dictConnection:[Conection:String] = [Conection.missing:"Offline", Conection.medium:"Medium",Conection.stable:"Stable"]
-
-

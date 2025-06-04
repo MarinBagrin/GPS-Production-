@@ -39,6 +39,8 @@ class MapViewModel {
         stateShowing = .online
         trackersUseCase.sendSignal()
         archiveTrackers.removeAll()
+        trackers.value = trackers.value
+
     }
     func setArchiveShowing(initial:String, end:String,for pickedName: String) {
         stateShowing = .archive
@@ -61,7 +63,13 @@ class MapViewModel {
     func toogleShowingRouteFlag() {
         authUseCase.toogleShowingRouteFlag()
     }
-
+    func toogleNeededHidenForTracker(name: String) {
+        for tracker in trackers.value {
+            if tracker.value.name == name {
+                tracker.value.neededHiden.toggle()
+            }
+        }
+    }
     private func bind() {
         authUseCase.getObservableStateAuthenticated().bind{[weak self] state in
             self?.isAuthenticated.value = state
@@ -72,28 +80,40 @@ class MapViewModel {
         
         connectionServerUseCase.getObservableIsConnected().bind{[weak self] isConnected in
             
-            if (!isConnected) {
-                print("view model IsConnected: ", false)
-                self?.connectionServerUseCase.restartConnectionServer()
-                self?.isAuthenticated.value = .no
-            }
-            else{
-                print("view model IsConnected: ", true)
-                self?.isConnected.value = isConnected
-
-            }
+            self?.isConnected.value = isConnected
         }
         
         trackersUseCase.getObservableTrackers().bind{[weak self] trackers in
             if self?.stateShowing == .archive {
                 return
             }
-            self?.trackers.value = trackers.map{ trackerModel in
-                let observableTrackerVM = Observable<TrackerViewModel>(TrackerViewModel(trackerModel.value))
-                trackerModel.bind{[weak observableTrackerVM] tracker in
-                    observableTrackerVM?.value = TrackerViewModel(tracker)
+            var isSame = false
+            if trackers.count == self?.trackers.value.count {
+                isSame = true
+                for i in 0..<trackers.count {
+                    if trackers[i].value.name == self?.trackers.value[i].value.name {
+                        guard let noNilTracker = self?.trackers.value[i].value.updateTracker(trackerModel: trackers[i].value) else {
+                            return
+                        }
+                        self?.trackers.value[i].value = noNilTracker
+                    }
+                    else {
+                        isSame = false
+                        break
+                    }
                 }
-                return observableTrackerVM
+            }
+            
+            //print("flagSame:", flagSame)
+            if !isSame {
+                self?.trackers.value = trackers.map{ trackerModel in
+                    
+                    let observableTrackerVM = Observable<TrackerViewModel>(TrackerViewModel(trackerModel.value))
+                    trackerModel.bind{[weak observableTrackerVM] tracker in
+                        observableTrackerVM?.value = TrackerViewModel(tracker)
+                    }
+                    return observableTrackerVM
+                }
             }
         }
         
@@ -169,7 +189,8 @@ class TrackerViewModel {
     var speed: Int
     var connectionGPS:Conection
     var connectionNET:Conection
-    var neededHiden:Bool = false
+    var neededHiden:Bool = true
+    var networkBTS:Int = 0
     init(_ trackerModel:TrackerModel) {
         lat = trackerModel.lat 
         long = trackerModel.long
@@ -181,11 +202,17 @@ class TrackerViewModel {
         address = /*trackerModel.address ??*/ ""
         connectionGPS = trackerModel.connectionGPS
         connectionNET = trackerModel.connectionNET
+        networkBTS = trackerModel.networkProcent ?? -1
+        print(networkBTS)
     }
     
     func updateTracker(trackerModel:TrackerModel)->TrackerViewModel{
         self.lat = trackerModel.lat
         self.long = trackerModel.long
+        self.speed = trackerModel.speed
+        self.networkBTS = trackerModel.networkProcent
+        self.time = trackerModel.time
+        print("updating networkBTS: ",networkBTS)
         //many
         return self
     }

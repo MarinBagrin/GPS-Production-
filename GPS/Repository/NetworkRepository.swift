@@ -18,6 +18,8 @@ protocol NetworkRepositoryDataLayer {
     func notifyAboutChanheAddressConnection()
     var saveCorrectCredentials:((Credentials)->Void)? {get set}
     var getDataForConnect:(()->AddressModel)? {get set}
+    var stateAuthenticated: Observable<stateAuth> { get }
+
     
 
 }
@@ -41,35 +43,51 @@ class NetworkRepositoryImpl{
     var integ = 0
     var currentLenMessage:Int = 0
     var collectionBytes = Data()
+    
     lazy var connection:NWConnection? = nil
     
     init() {
         
-        print(NWEndpoint.Host(UserDefaults.standard.string(forKey: "ip") ?? "localhost"))
-        print(UInt16(UserDefaults.standard.integer(forKey: "port")))
-        
-    }
-    func restartConnection() {
-        cancelConnectionIfNeeded()
-        configureConnection()
         startAsyncManageConnection()
     }
-    func cancelConnectionIfNeeded()
+    func restartConnection() {
+        cancelConnection()
+        configureConnection()
+        print("attempt start server")
+        connection?.start(queue: .global())
+    }
+    func cancelConnection()
     {
-        if (isStarted) {
-            connection?.cancel()
-            connection = nil
-        }
+        connection?.cancel()
+        connection = nil
     }
     private func configureConnection() {
         integ += 1
-        isStarted = true
+        var tlsOptions = NWProtocolTLS.Options()
+        var tcpOptions = NWProtocolTCP.Options()
+        // 2) Устанавливаем блок проверки сертификата сервера
+        //    Здесь приводится самый простой вариант: любое доверие принимается.
+        //    Для продакшена замените на реальную валидацию через SecTrustEvaluate.
+        sec_protocol_options_set_verify_block( tlsOptions.securityProtocolOptions,
+            { metadata, trust, complete in
+                // Вариант «всегда доверять»:
+                complete(true)
+                
+                // Если нужно проверять цепочку:
+                // let secTrust = trust as! SecTrust
+                // var result = SecTrustResultType.invalid
+                // SecTrustEvaluate(secTrust, &result)
+                // let isTrusted = (result == .unspecified || result == .proceed)
+                // complete(isTrusted)
+            },
+            DispatchQueue.global()
+        )
         guard let addresForConnect = getDataForConnect?() else {print("ошибка, get dataForConnect");return}
         host = NWEndpoint.Host(addresForConnect.host)
         port = NWEndpoint.Port(rawValue: addresForConnect.port)
         print(addresForConnect.host)
         print(addresForConnect.port)
-        connection = NWConnection(host: host!, port: port!, using: .tcp)
+        connection = NWConnection(host: host!, port: port!, using: NWParameters(tls: tlsOptions, tcp: tcpOptions))
         connection?.stateUpdateHandler = { state in
             switch state {
             case .ready:
@@ -78,9 +96,9 @@ class NetworkRepositoryImpl{
                 self.recieveDataTrackers()
             case .waiting(let error):
                 print("Соединение ожидает. Ошибка: \(error.localizedDescription)")
-                //self.isConnected.value = false
             case .failed(let error):
                 print("Соединение не удалось. Ошибка: \(error.localizedDescription)")
+                self.isConnected.value = false
             case .cancelled:
                 print("Соединение было отменено.")
             case .preparing:
@@ -92,15 +110,16 @@ class NetworkRepositoryImpl{
         }
     }
     private func startAsyncManageConnection() {
-        print("attempt start server")
-        connection?.start(queue: .global())
-        DispatchQueue.global().async {
-            Thread.sleep(forTimeInterval: 2.5)
-            if (self.isConnected.value == false) {
-                self.stateAuthenticated.value = .no
-                self.isConnected.value = false
-                print("perezapysk")
+        Task {
+            while true {
+                try await Task.sleep(nanoseconds: 2_000_0000_00)
+                if (self.isConnected.value == false) {
+                    self.stateAuthenticated.value = .no
+                    self.restartConnection()
+                    print("perezapysk")
+                }
             }
+            print("xyinea vyslha")
         }
     }
     
@@ -169,7 +188,7 @@ class NetworkRepositoryImpl{
                 }
             }
         }
-        else if(request.contains("UnAllowAuth")) {
+        else if(request.contains("NoAuth")) {
             self.stateAuthenticated.value = .wrong
         }
         else if (request.contains("Archive")) {
@@ -248,7 +267,12 @@ class NetworkRepositoryImpl{
                     configTracker.long = Double(recTracker.longitude) ?? 0
                     configTracker.connectionNET = configTracker.lat == 0 ? .missing : .stable
                     configTracker.connectionGPS = configTracker.lat == 0 ? .missing : .stable
-                    configTracker.setAddress()
+                    configTracker.speed = Int(recTracker.speed)
+                    configTracker.time = recTracker.timeTrack
+                    print("RFSignal", Int(recTracker.coordinates), recTracker.coordinates)
+
+                    configTracker.networkProcent = Int(recTracker.coordinates) ?? -1
+                    print(configTracker.networkProcent)
                 }
                 self.recivedTrackers.value = self.recivedTrackers.value
             }

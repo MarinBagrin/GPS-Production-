@@ -29,7 +29,7 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
     init(_ superFrame: CGRect, viewModel: MapViewModel) {
         map = MKMapView(frame:superFrame)
         initialLocation = CLLocationCoordinate2D(latitude: 47.003670, longitude: 28.907089)
-        region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 1907, longitudinalMeters: 1907)
+        region = MKCoordinateRegion(center: initialLocation, latitudinalMeters: 4000, longitudinalMeters: 4000)
         map.setRegion(region, animated: true)
         self.viewModel = viewModel
         super.init()
@@ -140,12 +140,14 @@ class AppleMapMnagerView:NSObject/*, UIMap*/, MKMapViewDelegate {
             
             annotationView =  mapView.dequeueReusableAnnotationView(withIdentifier:identifer)
             if (annotationView == nil) {
-                annotationView = TrackerAnnotationView(reuseIdentifier: identifer)
+                annotationView = TrackerAnnotationView(reuseIdentifier: identifer,viewModel: viewModel)
                 
             }
             (annotationView as! TrackerAnnotationView).configureAnnotation(annotation)
             
             annotationView.canShowCallout = false
+            print("сколько раза сука блядь")
+            
             
         }
         else if annotation is AnnotationDriving {
@@ -486,18 +488,23 @@ class AnnotationTraker:NSObject,MKAnnotation {
     var title: String?
     var subtitle: String?
     var tracker:TrackerViewModel!
+    var isCallout = false
+    override init() {
+
+    }
 }
 
 class TrackerAnnotationView: MKAnnotationView {
     var titleLabel = UILabel()
-    var callout = CalloutView()
+    var callout:CalloutView?
     var blurView = UIView()
-    init(reuseIdentifier:String?) {
+    weak var viewModel:MapViewModel?
+    init(reuseIdentifier:String?,viewModel:MapViewModel) {
          super.init(annotation: nil, reuseIdentifier: reuseIdentifier)
          setupUI()
+        self.viewModel = viewModel
     }
     private func setupUI() {
-        callout.alpha = 0
         self.image = resizeImage(image: UIImage(named:"transportation-4.png")!, targetSize: CGSize(width: 40, height: 40))
         
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold) // шрифт 14, жирный
@@ -508,36 +515,59 @@ class TrackerAnnotationView: MKAnnotationView {
         titleLabel.layer.shadowOffset = CGSize(width: 2, height: 2) // смещение тени
         titleLabel.layer.shadowRadius = 1 // радиус тени
         
-        titleLabel.isHidden = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         
         blurView.clipsToBounds = true
         blurView.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(titleLabel)
-        self.addSubview(callout)
-        //blurView.addSubview(titleLabel)
         blurView.backgroundColor = .red
-             // Добавляем размытие на фон
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: self.bottomAnchor),
             titleLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.3),
             titleLabel.widthAnchor.constraint(equalTo: self.heightAnchor, multiplier: 3),
             titleLabel.centerXAnchor.constraint(equalTo: self.centerXAnchor)
         ])
-        NSLayoutConstraint.activate([
-            callout.bottomAnchor.constraint(equalTo: self.topAnchor,constant: -2.5),
-            callout.topAnchor.constraint(equalTo: self.topAnchor,constant: -230),
-            callout.leadingAnchor.constraint(equalTo: self.leadingAnchor,constant: -115),
-            callout.trailingAnchor.constraint(equalTo: self.trailingAnchor,constant: 115),
-        ])
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showCallout))
         self.addGestureRecognizer(tapGesture)
     }
+    func setCallout() {
+        func getObservableWith(name:String) -> Observable<TrackerViewModel> {
+            for observable in viewModel?.trackers.value ?? [] {
+                if observable.value.name == name {
+                    return observable
+                }
+            }
+            fatalError("Noname in AMVSetCallout")
+            return Observable<TrackerViewModel>(TrackerViewModel(TrackerModel()))
+        }
+    
+        var observableTracker = getObservableWith(name: titleLabel.text ?? "noname")
+        callout = CalloutView(trackerVM: observableTracker)
+        self.addSubview(callout!)
+        NSLayoutConstraint.activate([
+            callout!.bottomAnchor.constraint(equalTo: self.topAnchor,constant: -2.5),
+            callout!.centerXAnchor.constraint(equalTo: self.centerXAnchor)
+        ])
+    }
     func configureAnnotation(_ annotation:MKAnnotation) {
         titleLabel.text = (annotation as! AnnotationTraker ).title
+        self.annotation = annotation
+        if (annotation as! AnnotationTraker).tracker.neededHiden {
+            callout?.removeFromSuperview()
+            callout = nil
+            print("был сделан UNhiden")
+        }
+        else {
+            
+            setCallout()
+            print("был сделан hiden")
+
+        }
     
     }
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -546,8 +576,18 @@ class TrackerAnnotationView: MKAnnotationView {
         blurView.frame = titleLabel.frame
     }
     @objc func showCallout() {
-        self.callout.showHide()
-        self.callout.updateData(tracker: (annotation as! AnnotationTraker).tracker)
+        viewModel?.toogleNeededHidenForTracker(name: titleLabel.text ?? "none")
+        if (annotation as! AnnotationTraker).tracker.neededHiden {
+            callout?.removeFromSuperview()
+            callout = nil
+            print("был сделан UNhiden")
+        }
+        else {
+            
+            setCallout()
+            print("был сделан hiden")
+
+        }
     }
 }
 

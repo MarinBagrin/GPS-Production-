@@ -21,6 +21,7 @@ class TrackerModel {
     var address: String!
     var connectionGPS:Conection
     var connectionNET:Conection
+    var networkProcent:Int!
     static var counts = 0
     init() {
         id = TrackerModel.counts

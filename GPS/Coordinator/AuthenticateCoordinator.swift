@@ -27,16 +27,28 @@ class AuthenticateCoordinator:Coordinator {
         print("start coordinator auth")
         let authenticateController = AuthenticateController(MapViewModel(repositories: repositories), coordinator: self)
         authenticateController.modalPresentationStyle = .overCurrentContext
+        authenticateController.modalTransitionStyle = .crossDissolve
+        
         navController.present(authenticateController, animated: true)
         
     }
     func restart() {
         
     }
-    private func removeFromSuperCoordinator() {
+//    func closeAuthenticateVC() {
+//        navController.dismiss(animated: true)
+//    }
+    func showSettingsVC() {
+        let settingsCoordinator = SettingsCoordinator(navController: navController, parrentCoordinator: self, repositories: repositories)
+        childCoordinators.append(settingsCoordinator)
+        settingsCoordinator.start()
+    }
+    func removeFromSuperCoordinator() {
         for i in 0..<(parrentCoordinator?.childCoordinators.count ?? 0) {
+            print("count: ", parrentCoordinator?.childCoordinators.count, "index:", i)
             if let coord = parrentCoordinator?.childCoordinators[i] as? AuthenticateCoordinator, coord === self {
                 parrentCoordinator?.childCoordinators.remove(at: i)
+                break
             }
         }
     }

@@ -124,10 +124,12 @@ class SettingsViewController:UIViewController {
         stacksSettings.backgroundColor = .black
 
         closeButton.setTitle(translate[lang]!["close"]!, for: .normal)
-        closeButton.setTitleColor(.systemBlue, for: .normal)
-        closeButton.backgroundColor = .lightGray
+        closeButton.setTitleColor(.white, for: .normal)
+        closeButton.backgroundColor = .systemBlue
         closeButton.addTarget(self, action: #selector(presentAlert), for: .touchUpInside)
-        
+        closeButton.layer.cornerRadius = 20
+        closeButton.layer.borderWidth = 1
+        closeButton.layer.borderColor = UIColor.white.cgColor
 
         
         NSLayoutConstraint.activate([
@@ -138,14 +140,16 @@ class SettingsViewController:UIViewController {
         NSLayoutConstraint.activate([
             stacksSettings.topAnchor.constraint(equalTo: namePage.bottomAnchor),
             //stacksSettings.heightAnchor.constraint(equalTo: self.view.heightAnchor,multiplier: 0.90),
-            stacksSettings.widthAnchor.constraint(equalTo: self.view.widthAnchor,multiplier: 0.80),
-            stacksSettings.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)
+//            stacksSettings.widthAnchor.constraint(equalTo: self.view.widthAnchor,multiplier: 0.80),
+//            stacksSettings.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            stacksSettings.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,constant: 12),
+            stacksSettings.trailingAnchor.constraint(equalTo: self.view.trailingAnchor,constant: -12),
         ])
         NSLayoutConstraint.activate([
-            closeButton.topAnchor.constraint(equalTo: stacksSettings.bottomAnchor,constant: 25),
+            closeButton.topAnchor.constraint(equalTo: stacksSettings.bottomAnchor,constant: 24),
             closeButton.centerXAnchor.constraint(equalTo: stacksSettings.centerXAnchor),
-//            closeButton.widthAnchor.constraint(equalTo: stacksSettings.widthAnchor,multiplier: 0.20),
-            closeButton.heightAnchor.constraint(equalTo: stacksSettings.widthAnchor,multiplier: 0.15)
+            closeButton.widthAnchor.constraint(equalTo:stacksSettings.widthAnchor ),
+            closeButton.heightAnchor.constraint(equalToConstant: 40),
         ])
         
     }
@@ -317,14 +321,15 @@ final class CellSettings:UIView {
             settingsViewController?.buttonsLang.append(button)
         }
         NSLayoutConstraint.activate([
-           //contentStack.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1),
-            contentStack.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.65),
+        contentStack.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1),
+        contentStack.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.65),
 
 
         ])
-        
+        contentStack.isLayoutMarginsRelativeArrangement = true
+        //contentStack.layoutMargins = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
         contentStack.alignment = .center
-        contentStack.distribution = .equalCentering
+        contentStack.distribution = .fillEqually
         //contentStack.spacing = 20
     }
     func addUISwitch() {

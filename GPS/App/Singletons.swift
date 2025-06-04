@@ -33,8 +33,11 @@ let translate: [Language: [String: String]] = [
             "sortby": "Sort by",
             "name": "Name",
             "battery": "Battery",
-            "gps": "GPS",
-            "online": "Online"
+            "online": "Online",
+            "network" : "Network 📶:",
+            "gps" : "GPS 🛰️:",
+            "speed" : "Speed ➡️:",
+            "time_updated" : "Time 🕒:",
         ],
     .ru: [
             "login": "Войти",
@@ -53,7 +56,7 @@ let translate: [Language: [String: String]] = [
             "enterport": "Введите порт",
             "sellang": "Выберите язык",
             "savelogpas": "Сохранить логин или пароль",
-            "cancel": "Отмена",//11
+            "cancel": "Отмена",//
             "close": "Закрыть",
             "alert": "Внимание!",
             "sure?": "Вы уверены, что хотите сохранить изменения?",
@@ -64,7 +67,9 @@ let translate: [Language: [String: String]] = [
             "name": "Имя",
             "battery": "Батарея",
             "gps": "GPS",
-            "online": "Онлайн"
+            "online": "Онлайн",
+            "time_updated " : "Time 🕒:",
+
         ],
     .ro: [
             "login": "Autentificare",
@@ -94,7 +99,9 @@ let translate: [Language: [String: String]] = [
             "name": "Nume",
             "battery": "Baterie",
             "gps": "GPS",
-            "online": "Online"
+            "online": "Online",
+            "time_updated " : "Time 🕒:",
+
         ]
     ]
 

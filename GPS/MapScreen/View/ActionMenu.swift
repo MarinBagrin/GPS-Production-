@@ -28,7 +28,7 @@ class ActionMenu: UIView {
         stackView.spacing = 10
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
-        let configImage = UIImage.SymbolConfiguration(pointSize: 25)
+        let configImage = UIImage.SymbolConfiguration(pointSize: 20)
     
         archiveButton.setImage(UIImage(systemName: "archivebox", withConfiguration: configImage ), for: .normal)
         locationButton.setImage(UIImage(systemName: "location", withConfiguration: configImage ), for: .normal)
@@ -42,10 +42,14 @@ class ActionMenu: UIView {
             button.tintColor = .white
             stackView.addArrangedSubview(button)
         }
+        let viewSeparator = UIView()
+        viewSeparator.backgroundColor = .separator
+        viewSeparator.translatesAutoresizingMaskIntoConstraints = false
+        
         
         self.addSubview(blur)
         self.addSubview(stackView)
-        
+        stackView.addSubview(viewSeparator)
         NSLayoutConstraint.activate([
 //            stackView.topAnchor.constraint(equalTo: self.topAnchor),
 //            stackView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
@@ -59,7 +63,13 @@ class ActionMenu: UIView {
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
 //            self.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
 //            self.bottomAnchor.constraint(equalTo: stackView.bottomAnchor),
+            viewSeparator.centerXAnchor.constraint(equalTo: stackView.centerXAnchor),
+            viewSeparator.centerYAnchor.constraint(equalTo: stackView.centerYAnchor),
+            viewSeparator.widthAnchor.constraint(equalTo: stackView.widthAnchor),
+            viewSeparator.heightAnchor.constraint(equalToConstant: 1),
+            
         ])
+        
         
     }
     @objc func archiveButtonTapped() {

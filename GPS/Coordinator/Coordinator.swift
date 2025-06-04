@@ -24,7 +24,15 @@ class MapCoordinator:Coordinator {
     private func bind() {
         self.repositories.network.stateAuthenticated.bind { [weak self] stateAuth in
             guard let self = self else {print("returnMCBind");return;}
-            start()
+            var isSettingsControllerInNav = false
+            navController.viewControllers.forEach{vc in
+                if vc is SettingsViewController {
+                    isSettingsControllerInNav = true
+                }
+            }
+            if isSettingsControllerInNav {
+                return
+            }
             if stateAuth == .no  {
                 var isContainAuthCoord = false
                 for coord in childCoordinators {
